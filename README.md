@@ -29,18 +29,21 @@ so decisions and rework requests are always explained in context.
 ## Tech stack
 
 - Next.js (App Router) + TypeScript
-- Prisma + SQLite (swap the datasource for Postgres/MySQL in production —
-  see below)
+- Prisma + PostgreSQL
 - NextAuth (credentials-based login; accounts are created by the admin, no
   external OAuth setup required)
 - Tailwind CSS
 
-## Getting started
+## Getting started (local development)
+
+You need a Postgres database — the free tier on [Neon](https://neon.tech) or
+[Vercel Postgres](https://vercel.com/storage/postgres) both work fine and take
+about a minute to set up.
 
 ```bash
 npm install
-cp .env.example .env      # then edit NEXTAUTH_SECRET, SEED_ADMIN_EMAIL, SEED_ADMIN_PASSWORD
-npx prisma migrate dev    # creates the SQLite database
+cp .env.example .env      # fill in DATABASE_URL, NEXTAUTH_SECRET, SEED_ADMIN_EMAIL, SEED_ADMIN_PASSWORD
+npx prisma migrate dev    # creates the tables
 npm run db:seed           # creates the first admin account
 npm run dev
 ```
@@ -75,13 +78,29 @@ temporary password you set for them — they can't self-register).
 All of this is visible to the freelancer on their own dashboard in real
 time, including every comment left along the way.
 
-## Moving to production
+## Deploying to Vercel
 
-- Switch `datasource db` in `prisma/schema.prisma` from `sqlite` to
-  `postgresql` (or your provider of choice) and point `DATABASE_URL` at a
-  real database — everything else (models, API routes) is unchanged.
-- Set `NEXTAUTH_URL` to your deployed URL and use a freshly generated
-  `NEXTAUTH_SECRET`.
-- Deploy to any Node host that supports Next.js (Vercel, Render, a VPS,
-  etc.) — run `npx prisma migrate deploy` once against the production
-  database before starting the app.
+1. **Push this repo to GitHub** (already done if you're reading this from
+   the repo) and go to [vercel.com/new](https://vercel.com/new) → import it.
+2. **Add a Postgres database**: in the new Vercel project, open the
+   **Storage** tab → **Create Database** → Postgres (Neon-powered). Vercel
+   automatically adds a `DATABASE_URL` environment variable for you.
+3. **Add the remaining environment variables** under Project Settings →
+   Environment Variables:
+   - `NEXTAUTH_SECRET` — generate with
+     `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`
+   - `NEXTAUTH_URL` — your Vercel URL, e.g. `https://your-app.vercel.app`
+   - `SEED_ADMIN_EMAIL` — your Gmail address (this becomes your admin login)
+   - `SEED_ADMIN_PASSWORD` — a strong password (8+ characters)
+4. **Deploy.** The build command (`prisma migrate deploy && prisma db seed
+   && next build`) creates the tables and your admin account automatically
+   on first deploy — no shell access needed. Every later deploy re-runs the
+   same command safely (it won't overwrite an existing admin account).
+5. Sign in at `https://your-app.vercel.app/login` with the
+   `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` you set, then use **Manage
+   users** to create accounts for your qualifiers, sales managers, and
+   freelancers.
+
+This also works the same way on any other Node host (Render, Railway, a
+VPS, etc.) — just point `DATABASE_URL` at your Postgres instance and set the
+same environment variables.

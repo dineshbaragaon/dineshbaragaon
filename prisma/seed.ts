@@ -4,23 +4,32 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  const adminEmail = process.env.SEED_ADMIN_EMAIL ?? "dinesh.baragaon@gmail.com";
-  const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "admin123";
+  const adminEmail = process.env.SEED_ADMIN_EMAIL;
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD;
+
+  if (!adminEmail || !adminPassword) {
+    console.log("SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD not set — skipping admin seed.");
+    return;
+  }
+
+  if (adminPassword.length < 8) {
+    throw new Error("SEED_ADMIN_PASSWORD must be at least 8 characters");
+  }
 
   const passwordHash = await bcrypt.hash(adminPassword, 10);
 
   const admin = await prisma.user.upsert({
-    where: { email: adminEmail },
+    where: { email: adminEmail.toLowerCase().trim() },
     update: {},
     create: {
       name: "Admin",
-      email: adminEmail,
+      email: adminEmail.toLowerCase().trim(),
       passwordHash,
       role: Role.ADMIN,
     },
   });
 
-  console.log(`Seeded admin user: ${admin.email} (password: ${adminPassword})`);
+  console.log(`Ensured admin user exists: ${admin.email}`);
 }
 
 main()
