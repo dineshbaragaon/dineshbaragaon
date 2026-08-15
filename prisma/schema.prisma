@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  FREELANCER
+  QUALIFIER
+  SALES_MANAGER
+}
+
+enum LeadStatus {
+  NEW
+  IN_QUALIFICATION
+  NEEDS_REWORK
+  REJECTED
+  QUALIFIED
+  ASSIGNED_TO_SALES
+  IN_PROGRESS
+  CONVERTED
+  CLOSED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  leadsSubmitted   Lead[]    @relation("FreelancerLeads")
+  leadsToQualify   Lead[]    @relation("QualifierLeads")
+  leadsToSell      Lead[]    @relation("SalesManagerLeads")
+  comments         Comment[]
+}
+
+model Lead {
+  id             String     @id @default(cuid())
+  title          String
+  contactName    String
+  contactPhone   String?
+  contactEmail   String?
+  company        String?
+  source         String?
+  details        String
+  status         LeadStatus @default(NEW)
+  preReworkStatus LeadStatus?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  freelancer     User       @relation("FreelancerLeads", fields: [freelancerId], references: [id])
+  freelancerId   String
+
+  qualifier      User?      @relation("QualifierLeads", fields: [qualifierId], references: [id])
+  qualifierId    String?
+
+  salesManager   User?      @relation("SalesManagerLeads", fields: [salesManagerId], references: [id])
+  salesManagerId String?
+
+  comments       Comment[]
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  body      String
+  createdAt DateTime @default(now())
+
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  leadId    String
+
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String
+}
