@@ -36,7 +36,18 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json();
-  const { title, contactName, contactPhone, contactEmail, company, source, details } = body;
+  const {
+    title,
+    contactName,
+    contactPhone,
+    contactEmail,
+    whatsappNumber,
+    city,
+    urgency,
+    company,
+    source,
+    details,
+  } = body;
 
   if (!title?.trim() || !contactName?.trim() || !details?.trim()) {
     return NextResponse.json(
@@ -45,12 +56,26 @@ export async function POST(req: Request) {
     );
   }
 
+  if (!contactPhone?.trim() && !contactEmail?.trim() && !whatsappNumber?.trim()) {
+    return NextResponse.json(
+      { error: "Add at least one way to reach this lead: phone, email, or WhatsApp" },
+      { status: 400 },
+    );
+  }
+
+  if (urgency && !["LOW", "MEDIUM", "HIGH"].includes(urgency)) {
+    return NextResponse.json({ error: "Invalid urgency" }, { status: 400 });
+  }
+
   const lead = await prisma.lead.create({
     data: {
       title: title.trim(),
       contactName: contactName.trim(),
       contactPhone: contactPhone?.trim() || null,
       contactEmail: contactEmail?.trim() || null,
+      whatsappNumber: whatsappNumber?.trim() || null,
+      city: city?.trim() || null,
+      urgency: urgency || "MEDIUM",
       company: company?.trim() || null,
       source: source?.trim() || null,
       details: details.trim(),

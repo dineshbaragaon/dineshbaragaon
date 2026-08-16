@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { LeadWithRelations } from "@/lib/types";
 import { StatusBadge } from "@/components/StatusBadge";
 import { CommentThread } from "@/components/CommentThread";
+import { URGENCY_LABEL, URGENCY_COLOR } from "@/lib/lead-urgency";
 
 type StaffOption = { id: string; name: string; email: string };
 
@@ -63,7 +64,12 @@ export function AdminLeadList({
                     {lead.company ? ` · ${lead.company}` : ""} · from {lead.freelancer.name}
                   </p>
                 </div>
-                <StatusBadge status={lead.status} />
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                  <StatusBadge status={lead.status} />
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${URGENCY_COLOR[lead.urgency]}`}>
+                    {URGENCY_LABEL[lead.urgency]}
+                  </span>
+                </div>
               </button>
 
               {openId === lead.id && (
@@ -92,6 +98,8 @@ function LeadDetails({ lead }: { lead: LeadWithRelations }) {
     <dl className="mb-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3">
       <Detail label="Phone" value={lead.contactPhone} />
       <Detail label="Email" value={lead.contactEmail} />
+      <Detail label="WhatsApp" value={lead.whatsappNumber} />
+      <Detail label="City" value={lead.city} />
       <Detail label="Source" value={lead.source} />
       <Detail label="Freelancer" value={`${lead.freelancer.name} (${lead.freelancer.email})`} />
       <Detail label="Qualifier" value={lead.qualifier ? `${lead.qualifier.name} (${lead.qualifier.email})` : null} />
@@ -112,7 +120,7 @@ function Detail({ label, value }: { label: string; value?: string | null }) {
   return (
     <div>
       <dt className="text-slate-400">{label}</dt>
-      <dd className="text-slate-700">{value}</dd>
+      <dd className="whitespace-pre-wrap text-slate-700">{value}</dd>
     </div>
   );
 }

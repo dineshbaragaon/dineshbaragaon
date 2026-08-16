@@ -26,6 +26,12 @@ enum LeadStatus {
   CLOSED
 }
 
+enum LeadUrgency {
+  LOW
+  MEDIUM
+  HIGH
+}
+
 model User {
   id           String   @id @default(cuid())
   name         String
@@ -47,6 +53,9 @@ model Lead {
   contactName    String
   contactPhone   String?
   contactEmail   String?
+  whatsappNumber String?
+  city           String?
+  urgency        LeadUrgency @default(MEDIUM)
   company        String?
   source         String?
   details        String

@@ -159,7 +159,30 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       if (lead.status !== "NEEDS_REWORK") {
         return NextResponse.json({ error: "Lead is not marked for rework" }, { status: 400 });
       }
-      const { title, contactName, contactPhone, contactEmail, company, source, details, comment } = body;
+      const {
+        title,
+        contactName,
+        contactPhone,
+        contactEmail,
+        whatsappNumber,
+        city,
+        urgency,
+        company,
+        source,
+        details,
+        comment,
+      } = body;
+
+      if (!contactPhone?.trim() && !contactEmail?.trim() && !whatsappNumber?.trim()) {
+        return NextResponse.json(
+          { error: "Add at least one way to reach this lead: phone, email, or WhatsApp" },
+          { status: 400 },
+        );
+      }
+
+      if (urgency && !["LOW", "MEDIUM", "HIGH"].includes(urgency)) {
+        return NextResponse.json({ error: "Invalid urgency" }, { status: 400 });
+      }
 
       const updated = await prisma.$transaction(async (tx) => {
         const updatedLead = await tx.lead.update({
@@ -169,6 +192,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             ...(contactName?.trim() ? { contactName: contactName.trim() } : {}),
             contactPhone: contactPhone?.trim() || null,
             contactEmail: contactEmail?.trim() || null,
+            whatsappNumber: whatsappNumber?.trim() || null,
+            city: city?.trim() || null,
+            ...(urgency ? { urgency } : {}),
             company: company?.trim() || null,
             source: source?.trim() || null,
             ...(details?.trim() ? { details: details.trim() } : {}),
