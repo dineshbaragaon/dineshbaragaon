@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { leadInclude } from "@/lib/lead-query";
 import { Shell } from "@/components/Shell";
 import { FreelancerLeadList } from "@/components/freelancer/FreelancerLeadList";
+import { ExportButton } from "@/components/ExportButton";
 
 export default async function FreelancerPage() {
   const user = await requireRole("FREELANCER");
@@ -30,12 +31,15 @@ export default async function FreelancerPage() {
             <span className="font-medium text-orange-700">{needsReworkCount} need rework</span>
           )}
         </div>
-        <Link
-          href="/freelancer/new"
-          className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
-        >
-          + Submit lead
-        </Link>
+        <div className="flex gap-2">
+          <ExportButton />
+          <Link
+            href="/freelancer/new"
+            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+          >
+            + Submit lead
+          </Link>
+        </div>
       </div>
 
       <FreelancerLeadList leads={leads} />

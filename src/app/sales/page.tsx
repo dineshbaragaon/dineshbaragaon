@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { leadInclude } from "@/lib/lead-query";
 import { Shell } from "@/components/Shell";
 import { SalesLeadList } from "@/components/sales/SalesLeadList";
+import { ExportButton } from "@/components/ExportButton";
 
 export default async function SalesPage() {
   const user = await requireRole("SALES_MANAGER");
@@ -23,10 +24,13 @@ export default async function SalesPage() {
       userName={user.name ?? ""}
       role={user.role}
     >
-      <div className="mb-6 flex gap-4 text-sm text-slate-500">
-        <span>{leads.length} total</span>
-        <span className="font-medium text-indigo-700">{activeCount} active</span>
-        <span className="font-medium text-green-700">{convertedCount} converted</span>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex gap-4 text-sm text-slate-500">
+          <span>{leads.length} total</span>
+          <span className="font-medium text-indigo-700">{activeCount} active</span>
+          <span className="font-medium text-green-700">{convertedCount} converted</span>
+        </div>
+        <ExportButton />
       </div>
 
       <SalesLeadList leads={leads} />

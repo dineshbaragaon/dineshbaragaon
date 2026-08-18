@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { leadInclude } from "@/lib/lead-query";
 import { Shell } from "@/components/Shell";
 import { QualifierLeadList } from "@/components/qualify/QualifierLeadList";
+import { ExportButton } from "@/components/ExportButton";
 
 export default async function QualifyPage() {
   const user = await requireRole("QUALIFIER");
@@ -22,9 +23,12 @@ export default async function QualifyPage() {
       userName={user.name ?? ""}
       role={user.role}
     >
-      <div className="mb-6 flex gap-4 text-sm text-slate-500">
-        <span>{leads.length} total</span>
-        {pendingCount > 0 && <span className="font-medium text-amber-700">{pendingCount} awaiting decision</span>}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex gap-4 text-sm text-slate-500">
+          <span>{leads.length} total</span>
+          {pendingCount > 0 && <span className="font-medium text-amber-700">{pendingCount} awaiting decision</span>}
+        </div>
+        <ExportButton />
       </div>
 
       <QualifierLeadList leads={leads} />
