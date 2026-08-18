@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { STATUS_LABEL } from "@/lib/lead-status";
 import { URGENCY_LABEL } from "@/lib/lead-urgency";
+import { COMPETITOR_LABEL, ENGAGEMENT_LABEL } from "@/lib/lead-competitor";
 
 function csvField(value: string | number | null | undefined): string {
   const str = value === null || value === undefined ? "" : String(value);
@@ -24,6 +25,9 @@ const COLUMNS = [
   "Urgency",
   "Company",
   "Source",
+  "Competitor content",
+  "Engagement",
+  "LinkedIn post",
   "Details",
   "Status",
   "Freelancer",
@@ -74,6 +78,9 @@ export async function GET() {
       URGENCY_LABEL[lead.urgency],
       lead.company,
       lead.source,
+      lead.competitor === "OTHER" ? lead.competitorOther : lead.competitor ? COMPETITOR_LABEL[lead.competitor] : "",
+      lead.engagementType ? ENGAGEMENT_LABEL[lead.engagementType] : "",
+      lead.sourceUrl,
       lead.details,
       STATUS_LABEL[lead.status],
       lead.freelancer.name,
