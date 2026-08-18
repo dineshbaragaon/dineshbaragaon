@@ -48,6 +48,10 @@ export async function POST(req: Request) {
     urgency,
     company,
     source,
+    competitor,
+    competitorOther,
+    sourceUrl,
+    engagementType,
     details,
   } = body;
 
@@ -69,6 +73,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid urgency" }, { status: 400 });
   }
 
+  if (competitor && !["AIRWALLEX", "PAYONEER", "WISE", "WORLDFIRST", "OTHER"].includes(competitor)) {
+    return NextResponse.json({ error: "Invalid competitor" }, { status: 400 });
+  }
+
+  if (engagementType && !["LIKED", "COMMENTED", "SHARED", "FOLLOWED", "OTHER"].includes(engagementType)) {
+    return NextResponse.json({ error: "Invalid engagement type" }, { status: 400 });
+  }
+
   const lead = await prisma.lead.create({
     data: {
       title: title.trim(),
@@ -82,6 +94,10 @@ export async function POST(req: Request) {
       urgency: urgency || "MEDIUM",
       company: company?.trim() || null,
       source: source?.trim() || null,
+      competitor: competitor || null,
+      competitorOther: competitor === "OTHER" ? competitorOther?.trim() || null : null,
+      sourceUrl: sourceUrl?.trim() || null,
+      engagementType: competitor ? engagementType || null : null,
       details: details.trim(),
       freelancerId: session.user.id,
       status: "NEW",

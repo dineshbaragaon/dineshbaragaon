@@ -4,8 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { LeadWithRelations } from "@/lib/types";
 import { StatusBadge } from "@/components/StatusBadge";
+import { CompetitorBadge } from "@/components/CompetitorBadge";
 import { CommentThread } from "@/components/CommentThread";
 import { URGENCY_LABEL, URGENCY_COLOR } from "@/lib/lead-urgency";
+import { COMPETITOR_LABEL, ENGAGEMENT_LABEL } from "@/lib/lead-competitor";
 import { useLocationFilter } from "@/hooks/useLocationFilter";
 import { LocationFilterBar } from "@/components/LocationFilterBar";
 
@@ -48,9 +50,12 @@ export function QualifierLeadList({ leads }: { leads: LeadWithRelations[] }) {
             </div>
             <div className="flex shrink-0 flex-col items-end gap-1">
               <StatusBadge status={lead.status} />
-              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${URGENCY_COLOR[lead.urgency]}`}>
-                {URGENCY_LABEL[lead.urgency]}
-              </span>
+              <div className="flex flex-wrap justify-end gap-1">
+                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${URGENCY_COLOR[lead.urgency]}`}>
+                  {URGENCY_LABEL[lead.urgency]}
+                </span>
+                <CompetitorBadge competitor={lead.competitor} competitorOther={lead.competitorOther} />
+              </div>
             </div>
           </button>
 
@@ -84,6 +89,12 @@ function LeadDetails({ lead }: { lead: LeadWithRelations }) {
       <Detail label="State" value={lead.state} />
       <Detail label="City" value={lead.city} />
       <Detail label="Source" value={lead.source} />
+      <Detail
+        label="Competitor content"
+        value={lead.competitor === "OTHER" ? lead.competitorOther : lead.competitor ? COMPETITOR_LABEL[lead.competitor] : null}
+      />
+      <Detail label="Engagement" value={lead.engagementType ? ENGAGEMENT_LABEL[lead.engagementType] : null} />
+      <Detail label="LinkedIn post" value={lead.sourceUrl} link />
       <Detail label="Freelancer" value={lead.freelancer.name} />
       <Detail label="Freelancer email" value={lead.freelancer.email} />
       <div className="col-span-full">
@@ -94,12 +105,20 @@ function LeadDetails({ lead }: { lead: LeadWithRelations }) {
   );
 }
 
-function Detail({ label, value }: { label: string; value?: string | null }) {
+function Detail({ label, value, link }: { label: string; value?: string | null; link?: boolean }) {
   if (!value) return null;
   return (
     <div>
       <dt className="text-slate-400">{label}</dt>
-      <dd className="whitespace-pre-wrap text-slate-700">{value}</dd>
+      <dd className="whitespace-pre-wrap text-slate-700">
+        {link ? (
+          <a href={value} target="_blank" rel="noopener noreferrer" className="text-blue-700 underline break-all">
+            {value}
+          </a>
+        ) : (
+          value
+        )}
+      </dd>
     </div>
   );
 }

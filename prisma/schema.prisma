@@ -32,6 +32,22 @@ enum LeadUrgency {
   HIGH
 }
 
+enum Competitor {
+  AIRWALLEX
+  PAYONEER
+  WISE
+  WORLDFIRST
+  OTHER
+}
+
+enum EngagementType {
+  LIKED
+  COMMENTED
+  SHARED
+  FOLLOWED
+  OTHER
+}
+
 model User {
   id           String   @id @default(cuid())
   name         String
@@ -41,41 +57,45 @@ model User {
   active       Boolean  @default(true)
   createdAt    DateTime @default(now())
 
-  leadsSubmitted   Lead[]    @relation("FreelancerLeads")
-  leadsToQualify   Lead[]    @relation("QualifierLeads")
-  leadsToSell      Lead[]    @relation("SalesManagerLeads")
-  comments         Comment[]
+  leadsSubmitted Lead[]    @relation("FreelancerLeads")
+  leadsToQualify Lead[]    @relation("QualifierLeads")
+  leadsToSell    Lead[]    @relation("SalesManagerLeads")
+  comments       Comment[]
 }
 
 model Lead {
-  id             String     @id @default(cuid())
-  title          String
-  contactName    String
-  contactPhone   String?
-  contactEmail   String?
-  whatsappNumber String?
-  country        String?
-  state          String?
-  city           String?
-  urgency        LeadUrgency @default(MEDIUM)
-  company        String?
-  source         String?
-  details        String
-  status         LeadStatus @default(NEW)
+  id              String          @id @default(cuid())
+  title           String
+  contactName     String
+  contactPhone    String?
+  contactEmail    String?
+  whatsappNumber  String?
+  country         String?
+  state           String?
+  city            String?
+  urgency         LeadUrgency     @default(MEDIUM)
+  company         String?
+  source          String?
+  competitor      Competitor?
+  competitorOther String?
+  sourceUrl       String?
+  engagementType  EngagementType?
+  details         String
+  status          LeadStatus      @default(NEW)
   preReworkStatus LeadStatus?
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 
-  freelancer     User       @relation("FreelancerLeads", fields: [freelancerId], references: [id])
-  freelancerId   String
+  freelancer   User   @relation("FreelancerLeads", fields: [freelancerId], references: [id])
+  freelancerId String
 
-  qualifier      User?      @relation("QualifierLeads", fields: [qualifierId], references: [id])
-  qualifierId    String?
+  qualifier   User?   @relation("QualifierLeads", fields: [qualifierId], references: [id])
+  qualifierId String?
 
-  salesManager   User?      @relation("SalesManagerLeads", fields: [salesManagerId], references: [id])
+  salesManager   User?   @relation("SalesManagerLeads", fields: [salesManagerId], references: [id])
   salesManagerId String?
 
-  comments       Comment[]
+  comments Comment[]
 }
 
 model Comment {
@@ -83,9 +103,9 @@ model Comment {
   body      String
   createdAt DateTime @default(now())
 
-  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  leadId    String
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  leadId String
 
-  author    User     @relation(fields: [authorId], references: [id])
-  authorId  String
+  author   User   @relation(fields: [authorId], references: [id])
+  authorId String
 }
