@@ -6,9 +6,12 @@ import type { LeadWithRelations } from "@/lib/types";
 import { StatusBadge } from "@/components/StatusBadge";
 import { CommentThread } from "@/components/CommentThread";
 import { URGENCY_LABEL, URGENCY_COLOR } from "@/lib/lead-urgency";
+import { useLocationFilter } from "@/hooks/useLocationFilter";
+import { LocationFilterBar } from "@/components/LocationFilterBar";
 
 export function SalesLeadList({ leads }: { leads: LeadWithRelations[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
+  const filter = useLocationFilter(leads);
 
   if (leads.length === 0) {
     return (
@@ -19,8 +22,18 @@ export function SalesLeadList({ leads }: { leads: LeadWithRelations[] }) {
   }
 
   return (
-    <ul className="space-y-3">
-      {leads.map((lead) => (
+    <div>
+      <div className="mb-4">
+        <LocationFilterBar filter={filter} />
+      </div>
+
+      {filter.filtered.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">
+          No leads match this location filter.
+        </div>
+      ) : (
+        <ul className="space-y-3">
+          {filter.filtered.map((lead) => (
         <li key={lead.id} className="rounded-xl border border-slate-200 bg-white shadow-sm">
           <button
             onClick={() => setOpenId(openId === lead.id ? null : lead.id)}
@@ -56,8 +69,10 @@ export function SalesLeadList({ leads }: { leads: LeadWithRelations[] }) {
             </div>
           )}
         </li>
-      ))}
-    </ul>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
@@ -67,6 +82,8 @@ function LeadDetails({ lead }: { lead: LeadWithRelations }) {
       <Detail label="Phone" value={lead.contactPhone} />
       <Detail label="Email" value={lead.contactEmail} />
       <Detail label="WhatsApp" value={lead.whatsappNumber} />
+      <Detail label="Country" value={lead.country} />
+      <Detail label="State" value={lead.state} />
       <Detail label="City" value={lead.city} />
       <Detail label="Source" value={lead.source} />
       <Detail label="Freelancer" value={lead.freelancer.name} />

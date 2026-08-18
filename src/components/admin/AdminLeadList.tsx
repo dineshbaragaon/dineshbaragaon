@@ -6,6 +6,8 @@ import type { LeadWithRelations } from "@/lib/types";
 import { StatusBadge } from "@/components/StatusBadge";
 import { CommentThread } from "@/components/CommentThread";
 import { URGENCY_LABEL, URGENCY_COLOR } from "@/lib/lead-urgency";
+import { useLocationFilter } from "@/hooks/useLocationFilter";
+import { LocationFilterBar } from "@/components/LocationFilterBar";
 
 type StaffOption = { id: string; name: string; email: string };
 
@@ -19,30 +21,34 @@ export function AdminLeadList({
   salesManagers: StaffOption[];
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<"ALL" | "NEW" | "QUALIFIED" | "ACTIVE">("ALL");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "NEW" | "QUALIFIED" | "ACTIVE">("ALL");
+  const locationFilter = useLocationFilter(leads);
 
-  const filtered = leads.filter((l) => {
-    if (filter === "ALL") return true;
-    if (filter === "NEW") return l.status === "NEW";
-    if (filter === "QUALIFIED") return l.status === "QUALIFIED";
-    if (filter === "ACTIVE") return l.status === "ASSIGNED_TO_SALES" || l.status === "IN_PROGRESS";
+  const filtered = locationFilter.filtered.filter((l) => {
+    if (statusFilter === "ALL") return true;
+    if (statusFilter === "NEW") return l.status === "NEW";
+    if (statusFilter === "QUALIFIED") return l.status === "QUALIFIED";
+    if (statusFilter === "ACTIVE") return l.status === "ASSIGNED_TO_SALES" || l.status === "IN_PROGRESS";
     return true;
   });
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap gap-2">
-        {(["ALL", "NEW", "QUALIFIED", "ACTIVE"] as const).map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`rounded-full px-3 py-1 text-xs font-medium ${
-              filter === f ? "bg-slate-900 text-white" : "bg-white text-slate-600 border border-slate-200"
-            }`}
-          >
-            {f === "ALL" ? "All" : f === "NEW" ? "New" : f === "QUALIFIED" ? "Awaiting sales assignment" : "Active in sales"}
-          </button>
-        ))}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
+          {(["ALL", "NEW", "QUALIFIED", "ACTIVE"] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setStatusFilter(f)}
+              className={`rounded-full px-3 py-1 text-xs font-medium ${
+                statusFilter === f ? "bg-slate-900 text-white" : "bg-white text-slate-600 border border-slate-200"
+              }`}
+            >
+              {f === "ALL" ? "All" : f === "NEW" ? "New" : f === "QUALIFIED" ? "Awaiting sales assignment" : "Active in sales"}
+            </button>
+          ))}
+        </div>
+        <LocationFilterBar filter={locationFilter} />
       </div>
 
       {filtered.length === 0 ? (
@@ -99,6 +105,8 @@ function LeadDetails({ lead }: { lead: LeadWithRelations }) {
       <Detail label="Phone" value={lead.contactPhone} />
       <Detail label="Email" value={lead.contactEmail} />
       <Detail label="WhatsApp" value={lead.whatsappNumber} />
+      <Detail label="Country" value={lead.country} />
+      <Detail label="State" value={lead.state} />
       <Detail label="City" value={lead.city} />
       <Detail label="Source" value={lead.source} />
       <Detail label="Freelancer" value={`${lead.freelancer.name} (${lead.freelancer.email})`} />

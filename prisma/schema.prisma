@@ -54,6 +54,8 @@ model Lead {
   contactPhone   String?
   contactEmail   String?
   whatsappNumber String?
+  country        String?
+  state          String?
   city           String?
   urgency        LeadUrgency @default(MEDIUM)
   company        String?
