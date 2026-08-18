@@ -23,7 +23,7 @@ export const authOptions: AuthOptions = {
           where: { email: credentials.email.toLowerCase().trim() },
         });
 
-        if (!user || !user.active) return null;
+        if (!user || !user.active || !user.passwordHash) return null;
 
         const valid = await bcrypt.compare(credentials.password, user.passwordHash);
         if (!valid) return null;

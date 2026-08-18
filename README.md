@@ -9,7 +9,8 @@ to the freelancer who sourced the lead.
 ## Roles
 
 - **Admin** — creates all accounts (freelancers, qualifiers, sales
-  managers) using their Gmail address as the login email, assigns new leads
+  managers) using their Gmail address as the login email — each new account
+  gets an email with a link to set their own password — assigns new leads
   to a qualifier, and hands qualified leads to a sales manager.
 - **Freelancer** — submits leads, sees their status update live (new →
   in qualification → qualified/rejected/needs rework → assigned to sales →
@@ -56,8 +57,30 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 
 Then sign in at `/login` with `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`. From
 the admin's **Manage users** page, create accounts for your qualifiers,
-sales managers, and freelancers (each one logs in with the Gmail address and
-temporary password you set for them — they can't self-register).
+sales managers, and freelancers — they can't self-register. Each new account
+gets an invite email (see below) with a link to set their own password; if
+`GMAIL_USER`/`GMAIL_APP_PASSWORD` aren't configured yet, the account is still
+created and the admin can click **Set password directly** as a fallback.
+
+## Sending invite emails
+
+New accounts are invited by email from your own Gmail address using Gmail's
+SMTP server. This needs an **App Password**, not your regular Gmail
+password (Google blocks regular-password SMTP login):
+
+1. Turn on **2-Step Verification** on the Google account you want to send
+   from, if it isn't already: [myaccount.google.com/security](https://myaccount.google.com/security).
+2. Go to [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords),
+   create one (any name, e.g. "LeadFlow"), and copy the 16-character password
+   it gives you.
+3. Set two environment variables:
+   - `GMAIL_USER` — the Gmail address you're sending from
+   - `GMAIL_APP_PASSWORD` — the 16-character App Password (not your login
+     password)
+
+Without these two set, user creation still works — the admin just has to
+share credentials manually via **Set password directly** in Manage users
+instead of the account getting an email.
 
 ## How the workflow maps to the app
 
@@ -92,6 +115,9 @@ time, including every comment left along the way.
    - `NEXTAUTH_URL` — your Vercel URL, e.g. `https://your-app.vercel.app`
    - `SEED_ADMIN_EMAIL` — your Gmail address (this becomes your admin login)
    - `SEED_ADMIN_PASSWORD` — a strong password (8+ characters)
+   - `GMAIL_USER` / `GMAIL_APP_PASSWORD` — optional but recommended, so new
+     accounts get an invite email instead of a manually-shared password; see
+     "Sending invite emails" above for how to generate the App Password
 4. **Deploy.** The build command (`prisma migrate deploy && prisma db seed
    && next build`) creates the tables and your admin account automatically
    on first deploy — no shell access needed. Every later deploy re-runs the

@@ -33,13 +33,15 @@ enum LeadUrgency {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  name         String
-  email        String   @unique
-  passwordHash String
-  role         Role
-  active       Boolean  @default(true)
-  createdAt    DateTime @default(now())
+  id                       String    @id @default(cuid())
+  name                     String
+  email                    String    @unique
+  passwordHash             String?
+  passwordSetToken         String?   @unique
+  passwordSetTokenExpires  DateTime?
+  role                     Role
+  active                   Boolean   @default(true)
+  createdAt                DateTime  @default(now())
 
   leadsSubmitted   Lead[]    @relation("FreelancerLeads")
   leadsToQualify   Lead[]    @relation("QualifierLeads")

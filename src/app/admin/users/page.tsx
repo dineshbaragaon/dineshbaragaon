@@ -7,10 +7,11 @@ import { UserManagement } from "@/components/admin/UserManagement";
 export default async function AdminUsersPage() {
   const user = await requireRole("ADMIN");
 
-  const users = await prisma.user.findMany({
-    select: { id: true, name: true, email: true, role: true, active: true, createdAt: true },
+  const rows = await prisma.user.findMany({
+    select: { id: true, name: true, email: true, role: true, active: true, createdAt: true, passwordHash: true },
     orderBy: { createdAt: "desc" },
   });
+  const users = rows.map(({ passwordHash, ...rest }) => ({ ...rest, pending: passwordHash === null }));
 
   return (
     <Shell
