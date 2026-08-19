@@ -35,12 +35,22 @@ function CreateRequirementForm({ freelancers }: { freelancers: FreelancerOption[
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [freelancerIds, setFreelancerIds] = useState<string[]>([]);
+  const [pendingId, setPendingId] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ text: string; ok: boolean } | null>(null);
 
-  function toggle(id: string) {
-    setFreelancerIds((ids) => (ids.includes(id) ? ids.filter((i) => i !== id) : [...ids, id]));
+  const selected = freelancers.filter((f) => freelancerIds.includes(f.id));
+  const selectable = freelancers.filter((f) => !freelancerIds.includes(f.id));
+
+  function addFreelancer() {
+    if (!pendingId) return;
+    setFreelancerIds((ids) => [...ids, pendingId]);
+    setPendingId("");
+  }
+
+  function removeFreelancer(id: string) {
+    setFreelancerIds((ids) => ids.filter((i) => i !== id));
   }
 
   async function submit(e: React.FormEvent) {
@@ -73,6 +83,7 @@ function CreateRequirementForm({ freelancers }: { freelancers: FreelancerOption[
     setTitle("");
     setDescription("");
     setFreelancerIds([]);
+    setPendingId("");
     router.refresh();
   }
 
@@ -111,19 +122,53 @@ function CreateRequirementForm({ freelancers }: { freelancers: FreelancerOption[
               No freelancer accounts yet. Create one under Manage users.
             </p>
           ) : (
-            <div className="max-h-48 space-y-1 overflow-y-auto rounded-lg border border-slate-200 p-3">
-              {freelancers.map((f) => (
-                <label key={f.id} className="flex items-center gap-2 text-sm text-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={freelancerIds.includes(f.id)}
-                    onChange={() => toggle(f.id)}
-                    className="h-4 w-4 rounded border-slate-300"
-                  />
-                  {f.name} <span className="text-slate-400">({f.email})</span>
-                </label>
-              ))}
-            </div>
+            <>
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  value={pendingId}
+                  onChange={(e) => setPendingId(e.target.value)}
+                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
+                >
+                  <option value="">
+                    {selectable.length === 0 ? "All freelancers selected" : "Select a freelancer…"}
+                  </option>
+                  {selectable.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name} ({f.email})
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={addFreelancer}
+                  disabled={!pendingId}
+                  className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+                >
+                  Add
+                </button>
+              </div>
+
+              {selected.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {selected.map((f) => (
+                    <span
+                      key={f.id}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700"
+                    >
+                      {f.name}
+                      <button
+                        type="button"
+                        onClick={() => removeFreelancer(f.id)}
+                        className="text-slate-400 hover:text-red-600"
+                        aria-label={`Remove ${f.name}`}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
