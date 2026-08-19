@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
@@ -53,7 +54,12 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Password</label>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="block text-sm font-medium text-slate-700">Password</label>
+              <Link href="/forgot-password" className="text-xs text-slate-500 hover:text-slate-700">
+                Forgot password?
+              </Link>
+            </div>
             <input
               type="password"
               required
