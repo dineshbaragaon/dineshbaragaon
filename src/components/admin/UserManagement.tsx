@@ -127,14 +127,32 @@ function CreateUserForm() {
 }
 
 function UserTable({ users }: { users: UserRow[] }) {
+  const [showArchived, setShowArchived] = useState(false);
+  const archivedCount = users.filter((u) => !u.active).length;
+  const visible = showArchived ? users : users.filter((u) => u.active);
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <h2 className="border-b border-slate-100 px-6 py-4 text-sm font-semibold text-slate-900">All accounts</h2>
-      <ul className="divide-y divide-slate-100">
-        {users.map((u) => (
-          <UserRowItem key={u.id} user={u} />
-        ))}
-      </ul>
+      <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+        <h2 className="text-sm font-semibold text-slate-900">All accounts</h2>
+        {archivedCount > 0 && (
+          <button
+            onClick={() => setShowArchived((s) => !s)}
+            className="text-xs font-medium text-slate-500 hover:text-slate-700"
+          >
+            {showArchived ? "Hide archived" : `Show archived (${archivedCount})`}
+          </button>
+        )}
+      </div>
+      {visible.length === 0 ? (
+        <p className="px-6 py-4 text-sm text-slate-400">No accounts to show.</p>
+      ) : (
+        <ul className="divide-y divide-slate-100">
+          {visible.map((u) => (
+            <UserRowItem key={u.id} user={u} />
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
@@ -144,6 +162,7 @@ function UserRowItem({ user }: { user: UserRow }) {
   const [busy, setBusy] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [newPassword, setNewPassword] = useState("");
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -158,6 +177,20 @@ function UserRowItem({ user }: { user: UserRow }) {
     setBusy(false);
     if (!res.ok) {
       setError("Failed to update");
+      return;
+    }
+    router.refresh();
+  }
+
+  async function deleteUser() {
+    setBusy(true);
+    setError(null);
+    const res = await fetch(`/api/users/${user.id}`, { method: "DELETE" });
+    const data = await res.json().catch(() => ({}));
+    setBusy(false);
+    if (!res.ok) {
+      setError(data.error ?? "Failed to delete");
+      setConfirmingDelete(false);
       return;
     }
     router.refresh();
@@ -213,7 +246,7 @@ function UserRowItem({ user }: { user: UserRow }) {
           <p className="text-sm text-slate-500">{user.email}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {!user.active && <span className="text-xs font-medium text-red-600">Deactivated</span>}
+          {!user.active && <span className="text-xs font-medium text-red-600">Archived</span>}
           {user.pending && <span className="text-xs font-medium text-amber-600">Invite pending</span>}
           {user.pending && (
             <button
@@ -235,8 +268,33 @@ function UserRowItem({ user }: { user: UserRow }) {
             disabled={busy}
             className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50"
           >
-            {user.active ? "Deactivate" : "Activate"}
+            {user.active ? "Archive" : "Unarchive"}
           </button>
+          {confirmingDelete ? (
+            <>
+              <span className="text-xs text-slate-500">Delete permanently?</span>
+              <button
+                onClick={deleteUser}
+                disabled={busy}
+                className="rounded-lg bg-red-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-800 disabled:opacity-50"
+              >
+                Confirm delete
+              </button>
+              <button
+                onClick={() => setConfirmingDelete(false)}
+                className="text-xs font-medium text-slate-500 hover:text-slate-700"
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => setConfirmingDelete(true)}
+              className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
+            >
+              Delete
+            </button>
+          )}
         </div>
       </div>
 
