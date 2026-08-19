@@ -26,6 +26,17 @@ export default async function AdminPage() {
   const newCount = leads.filter((l) => l.status === "NEW").length;
   const qualifiedCount = leads.filter((l) => l.status === "QUALIFIED").length;
 
+  const qualifiersWithLoad = qualifiers.map((q) => ({
+    ...q,
+    activeCount: leads.filter((l) => l.qualifierId === q.id && l.status === "IN_QUALIFICATION").length,
+  }));
+  const salesManagersWithLoad = salesManagers.map((s) => ({
+    ...s,
+    activeCount: leads.filter(
+      (l) => l.salesManagerId === s.id && (l.status === "ASSIGNED_TO_SALES" || l.status === "IN_PROGRESS"),
+    ).length,
+  }));
+
   return (
     <Shell
       title="All leads"
@@ -43,6 +54,9 @@ export default async function AdminPage() {
         </div>
         <div className="flex gap-2">
           <ExportButton />
+          <Link href="/admin/dashboard" className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">
+            Dashboard
+          </Link>
           <Link href="/admin/requirements" className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">
             Requirements
           </Link>
@@ -52,7 +66,7 @@ export default async function AdminPage() {
         </div>
       </div>
 
-      <AdminLeadList leads={leads} qualifiers={qualifiers} salesManagers={salesManagers} />
+      <AdminLeadList leads={leads} qualifiers={qualifiersWithLoad} salesManagers={salesManagersWithLoad} />
     </Shell>
   );
 }
