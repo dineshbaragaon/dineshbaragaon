@@ -12,7 +12,7 @@ import { COMPETITOR_LABEL, ENGAGEMENT_LABEL } from "@/lib/lead-competitor";
 import { useLocationFilter } from "@/hooks/useLocationFilter";
 import { LocationFilterBar } from "@/components/LocationFilterBar";
 
-type StaffOption = { id: string; name: string; email: string };
+type StaffOption = { id: string; name: string; email: string; activeCount: number };
 
 export function AdminLeadList({
   leads,
@@ -199,7 +199,7 @@ function AssignQualifier({ lead, qualifiers }: { lead: LeadWithRelations; qualif
           <option value="">Select qualifier…</option>
           {qualifiers.map((q) => (
             <option key={q.id} value={q.id}>
-              {q.name} ({q.email})
+              {q.name} — {q.activeCount} reviewing now
             </option>
           ))}
         </select>
@@ -260,7 +260,7 @@ function AssignSales({ lead, salesManagers }: { lead: LeadWithRelations; salesMa
           <option value="">Select sales manager…</option>
           {salesManagers.map((s) => (
             <option key={s.id} value={s.id}>
-              {s.name} ({s.email})
+              {s.name} — {s.activeCount} active lead{s.activeCount === 1 ? "" : "s"}
             </option>
           ))}
         </select>
