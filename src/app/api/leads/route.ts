@@ -53,6 +53,7 @@ export async function POST(req: Request) {
     sourceUrl,
     engagementType,
     details,
+    requirementProfileId,
   } = body;
 
   if (!title?.trim() || !contactName?.trim() || !details?.trim()) {
@@ -81,6 +82,21 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid engagement type" }, { status: 400 });
   }
 
+  let validRequirementProfileId: string | null = null;
+  if (requirementProfileId) {
+    const assignment = await prisma.requirementAssignment.findFirst({
+      where: {
+        profileId: requirementProfileId,
+        freelancerId: session.user.id,
+        profile: { active: true },
+      },
+    });
+    if (!assignment) {
+      return NextResponse.json({ error: "Invalid requirement tag" }, { status: 400 });
+    }
+    validRequirementProfileId = requirementProfileId;
+  }
+
   const lead = await prisma.lead.create({
     data: {
       title: title.trim(),
@@ -100,6 +116,7 @@ export async function POST(req: Request) {
       engagementType: competitor ? engagementType || null : null,
       details: details.trim(),
       freelancerId: session.user.id,
+      requirementProfileId: validRequirementProfileId,
       status: "NEW",
     },
     include: leadInclude,

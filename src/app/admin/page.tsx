@@ -43,6 +43,9 @@ export default async function AdminPage() {
         </div>
         <div className="flex gap-2">
           <ExportButton />
+          <Link href="/admin/requirements" className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">
+            Requirements
+          </Link>
           <Link href="/admin/users" className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">
             Manage users
           </Link>

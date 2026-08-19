@@ -6,6 +6,7 @@ import type { LeadUrgency } from "@prisma/client";
 import type { LeadWithRelations } from "@/lib/types";
 import { StatusBadge } from "@/components/StatusBadge";
 import { CompetitorBadge } from "@/components/CompetitorBadge";
+import { RequirementBadge } from "@/components/RequirementBadge";
 import { CommentThread } from "@/components/CommentThread";
 import { URGENCY_LABEL, URGENCY_COLOR } from "@/lib/lead-urgency";
 import { COMPETITOR_LABEL, ENGAGEMENT_LABEL } from "@/lib/lead-competitor";
@@ -13,7 +14,9 @@ import { LocationSelect } from "@/components/LocationSelect";
 import { useLocationFilter } from "@/hooks/useLocationFilter";
 import { LocationFilterBar } from "@/components/LocationFilterBar";
 
-export function FreelancerLeadList({ leads }: { leads: LeadWithRelations[] }) {
+type ProfileOption = { id: string; title: string };
+
+export function FreelancerLeadList({ leads, profiles }: { leads: LeadWithRelations[]; profiles: ProfileOption[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const filter = useLocationFilter(leads);
 
@@ -56,6 +59,7 @@ export function FreelancerLeadList({ leads }: { leads: LeadWithRelations[] }) {
                 <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${URGENCY_COLOR[lead.urgency]}`}>
                   {URGENCY_LABEL[lead.urgency]}
                 </span>
+                <RequirementBadge profile={lead.requirementProfile} />
                 <CompetitorBadge competitor={lead.competitor} competitorOther={lead.competitorOther} />
               </div>
             </div>
@@ -65,7 +69,7 @@ export function FreelancerLeadList({ leads }: { leads: LeadWithRelations[] }) {
             <div className="border-t border-slate-100 px-5 py-4">
               <LeadDetails lead={lead} />
 
-              {lead.status === "NEEDS_REWORK" && <ReworkForm lead={lead} />}
+              {lead.status === "NEEDS_REWORK" && <ReworkForm lead={lead} profiles={profiles} />}
 
               <div className="mt-4">
                 <h4 className="mb-2 text-sm font-medium text-slate-700">Comments</h4>
@@ -97,6 +101,7 @@ function LeadDetails({ lead }: { lead: LeadWithRelations }) {
       />
       <Detail label="Engagement" value={lead.engagementType ? ENGAGEMENT_LABEL[lead.engagementType] : null} />
       <Detail label="LinkedIn post" value={lead.sourceUrl} link />
+      <Detail label="Requirement tag" value={lead.requirementProfile?.title} />
       <Detail label="Qualifier" value={lead.qualifier?.name} />
       <Detail label="Sales manager" value={lead.salesManager?.name} />
       <div className="col-span-full">
@@ -127,7 +132,7 @@ function Detail({ label, value, link }: { label: string; value?: string | null; 
 
 const EMPTY_ERRORS: Record<string, string> = {};
 
-function ReworkForm({ lead }: { lead: LeadWithRelations }) {
+function ReworkForm({ lead, profiles }: { lead: LeadWithRelations; profiles: ProfileOption[] }) {
   const router = useRouter();
   const [form, setForm] = useState({
     title: lead.title,
@@ -142,6 +147,7 @@ function ReworkForm({ lead }: { lead: LeadWithRelations }) {
     company: lead.company ?? "",
     source: lead.source ?? "",
     details: lead.details,
+    requirementProfileId: lead.requirementProfile?.id ?? "",
     comment: "",
   });
   const [errors, setErrors] = useState(EMPTY_ERRORS);
@@ -239,6 +245,23 @@ function ReworkForm({ lead }: { lead: LeadWithRelations }) {
         </div>
         <MiniField label="Company" value={form.company} onChange={(v) => update("company", v)} />
         <MiniField label="Source" value={form.source} onChange={(v) => update("source", v)} />
+        {profiles.length > 0 && (
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Requirement tag</label>
+            <select
+              value={form.requirementProfileId}
+              onChange={(e) => update("requirementProfileId", e.target.value)}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-base outline-none focus:border-slate-500 sm:text-sm"
+            >
+              <option value="">No tag</option>
+              {profiles.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.title}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
       <div className="mt-3">
         <label className="mb-1 block text-sm font-medium text-slate-700">Details</label>

@@ -173,6 +173,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         source,
         details,
         comment,
+        requirementProfileId,
       } = body;
 
       if (!contactPhone?.trim() && !contactEmail?.trim() && !whatsappNumber?.trim()) {
@@ -184,6 +185,25 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
       if (urgency && !["LOW", "MEDIUM", "HIGH"].includes(urgency)) {
         return NextResponse.json({ error: "Invalid urgency" }, { status: 400 });
+      }
+
+      let validRequirementProfileId: string | null | undefined = undefined;
+      if (requirementProfileId !== undefined) {
+        if (requirementProfileId) {
+          const assignment = await prisma.requirementAssignment.findFirst({
+            where: {
+              profileId: requirementProfileId,
+              freelancerId: user.id,
+              profile: { active: true },
+            },
+          });
+          if (!assignment) {
+            return NextResponse.json({ error: "Invalid requirement tag" }, { status: 400 });
+          }
+          validRequirementProfileId = requirementProfileId;
+        } else {
+          validRequirementProfileId = null;
+        }
       }
 
       const updated = await prisma.$transaction(async (tx) => {
@@ -202,6 +222,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             company: company?.trim() || null,
             source: source?.trim() || null,
             ...(details?.trim() ? { details: details.trim() } : {}),
+            ...(validRequirementProfileId !== undefined ? { requirementProfileId: validRequirementProfileId } : {}),
             status: lead.preReworkStatus ?? "NEW",
             preReworkStatus: null,
           },

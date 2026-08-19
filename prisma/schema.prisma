@@ -63,6 +63,9 @@ model User {
   leadsToQualify Lead[]    @relation("QualifierLeads")
   leadsToSell    Lead[]    @relation("SalesManagerLeads")
   comments       Comment[]
+
+  profilesCreated    RequirementProfile[]     @relation("ProfilesCreated")
+  profileAssignments RequirementAssignment[]  @relation("ProfileAssignments")
 }
 
 model Lead {
@@ -98,6 +101,36 @@ model Lead {
   salesManagerId String?
 
   comments Comment[]
+
+  requirementProfile   RequirementProfile? @relation(fields: [requirementProfileId], references: [id])
+  requirementProfileId String?
+}
+
+model RequirementProfile {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  createdBy   User   @relation("ProfilesCreated", fields: [createdById], references: [id])
+  createdById String
+
+  assignments RequirementAssignment[]
+  leads       Lead[]
+}
+
+model RequirementAssignment {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  profile   RequirementProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId String
+
+  freelancer   User   @relation("ProfileAssignments", fields: [freelancerId], references: [id])
+  freelancerId String
+
+  @@unique([profileId, freelancerId])
 }
 
 model Comment {

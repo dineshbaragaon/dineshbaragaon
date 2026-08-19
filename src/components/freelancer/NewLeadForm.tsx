@@ -24,7 +24,10 @@ const EMPTY_FORM = {
   sourceUrl: "",
   engagementType: "" as EngagementType | "",
   details: "",
+  requirementProfileId: "",
 };
+
+type ProfileOption = { id: string; title: string };
 
 type FormState = typeof EMPTY_FORM;
 type FormErrors = Partial<Record<keyof FormState, string>>;
@@ -40,7 +43,7 @@ function validate(form: FormState): FormErrors {
   return errors;
 }
 
-export function NewLeadForm() {
+export function NewLeadForm({ profiles }: { profiles: ProfileOption[] }) {
   const router = useRouter();
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -162,6 +165,29 @@ export function NewLeadForm() {
           placeholder="e.g. LinkedIn, referral"
         />
       </div>
+
+      {profiles.length > 0 && (
+        <div>
+          <label className="mb-1 block text-sm font-medium text-slate-700">
+            Requirement tag
+          </label>
+          <select
+            value={form.requirementProfileId}
+            onChange={(e) => update("requirementProfileId", e.target.value)}
+            className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-base outline-none focus:border-slate-500 sm:text-sm"
+          >
+            <option value="">No tag</option>
+            {profiles.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.title}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-slate-400">
+            Tag this lead against a requirement your admin has assigned you, so it&apos;s classified correctly for everyone.
+          </p>
+        </div>
+      )}
 
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
         <p className="mb-3 text-sm font-medium text-slate-700">

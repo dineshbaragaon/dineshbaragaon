@@ -28,6 +28,7 @@ const COLUMNS = [
   "Competitor content",
   "Engagement",
   "LinkedIn post",
+  "Requirement tag",
   "Details",
   "Status",
   "Freelancer",
@@ -61,6 +62,7 @@ export async function GET() {
       freelancer: { select: { name: true, email: true } },
       qualifier: { select: { name: true } },
       salesManager: { select: { name: true } },
+      requirementProfile: { select: { title: true } },
     },
     orderBy: { updatedAt: "desc" },
   });
@@ -81,6 +83,7 @@ export async function GET() {
       lead.competitor === "OTHER" ? lead.competitorOther : lead.competitor ? COMPETITOR_LABEL[lead.competitor] : "",
       lead.engagementType ? ENGAGEMENT_LABEL[lead.engagementType] : "",
       lead.sourceUrl,
+      lead.requirementProfile?.title ?? "",
       lead.details,
       STATUS_LABEL[lead.status],
       lead.freelancer.name,

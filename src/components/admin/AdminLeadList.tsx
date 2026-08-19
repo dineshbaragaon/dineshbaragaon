@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { LeadWithRelations } from "@/lib/types";
 import { StatusBadge } from "@/components/StatusBadge";
 import { CompetitorBadge } from "@/components/CompetitorBadge";
+import { RequirementBadge } from "@/components/RequirementBadge";
 import { CommentThread } from "@/components/CommentThread";
 import { URGENCY_LABEL, URGENCY_COLOR } from "@/lib/lead-urgency";
 import { COMPETITOR_LABEL, ENGAGEMENT_LABEL } from "@/lib/lead-competitor";
@@ -78,6 +79,7 @@ export function AdminLeadList({
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${URGENCY_COLOR[lead.urgency]}`}>
                       {URGENCY_LABEL[lead.urgency]}
                     </span>
+                    <RequirementBadge profile={lead.requirementProfile} />
                     <CompetitorBadge competitor={lead.competitor} competitorOther={lead.competitorOther} />
                   </div>
                 </div>
@@ -120,6 +122,7 @@ function LeadDetails({ lead }: { lead: LeadWithRelations }) {
       />
       <Detail label="Engagement" value={lead.engagementType ? ENGAGEMENT_LABEL[lead.engagementType] : null} />
       <Detail label="LinkedIn post" value={lead.sourceUrl} link />
+      <Detail label="Requirement tag" value={lead.requirementProfile?.title} />
       <Detail label="Freelancer" value={`${lead.freelancer.name} (${lead.freelancer.email})`} />
       <Detail label="Qualifier" value={lead.qualifier ? `${lead.qualifier.name} (${lead.qualifier.email})` : null} />
       <Detail
