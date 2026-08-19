@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { sendRequirementProfileEmail } from "@/lib/mailer";
+import { sendRequirementProfileEmail, sendRequirementProfileUpdatedEmail } from "@/lib/mailer";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
@@ -20,6 +20,39 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (typeof body.active === "boolean") {
     await prisma.requirementProfile.update({ where: { id }, data: { active: body.active } });
     return NextResponse.json({ ok: true });
+  }
+
+  if (typeof body.title === "string" || typeof body.description === "string") {
+    const title = typeof body.title === "string" ? body.title.trim() : profile.title;
+    const description = typeof body.description === "string" ? body.description.trim() : profile.description;
+
+    if (!title || !description) {
+      return NextResponse.json({ error: "Title and description are required" }, { status: 400 });
+    }
+
+    const updated = await prisma.requirementProfile.update({
+      where: { id },
+      data: { title, description },
+    });
+
+    const assignedFreelancers = await prisma.requirementAssignment.findMany({
+      where: { profileId: id },
+      select: { freelancer: { select: { name: true, email: true } } },
+    });
+
+    const emailResults = await Promise.all(
+      assignedFreelancers.map((a) =>
+        sendRequirementProfileUpdatedEmail({
+          to: a.freelancer.email,
+          name: a.freelancer.name,
+          title: updated.title,
+          description: updated.description,
+        }),
+      ),
+    );
+    const sentCount = emailResults.filter((r) => r.sent).length;
+
+    return NextResponse.json({ ok: true, profile: updated, emailSummary: { sent: sentCount, total: assignedFreelancers.length } });
   }
 
   if (body.removeFreelancerId) {

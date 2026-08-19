@@ -94,6 +94,17 @@ export function sendRequirementProfileEmail(params: { to: string; name: string; 
   });
 }
 
+export function sendRequirementProfileUpdatedEmail(params: { to: string; name: string; title: string; description: string }) {
+  return sendLinkEmail({
+    to: params.to,
+    subject: `Lead requirement updated: ${params.title}`,
+    heading: `${params.title} (updated)`,
+    intro: `Hi ${params.name}, your admin has updated the guidance for a lead requirement you're assigned to:\n\n"${params.description}"`,
+    buttonLabel: "View in Requirements",
+    link: `${baseUrl()}/freelancer/requirements`,
+  });
+}
+
 function escapeHtml(str: string): string {
   return str.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 }
