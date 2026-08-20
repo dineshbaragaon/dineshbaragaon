@@ -4,14 +4,7 @@ import { getSession } from "@/lib/session";
 import { STATUS_LABEL } from "@/lib/lead-status";
 import { URGENCY_LABEL } from "@/lib/lead-urgency";
 import { COMPETITOR_LABEL, ENGAGEMENT_LABEL } from "@/lib/lead-competitor";
-
-function csvField(value: string | number | null | undefined): string {
-  const str = value === null || value === undefined ? "" : String(value);
-  if (/[",\n]/.test(str)) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
-}
+import { toCsv } from "@/lib/csv";
 
 const COLUMNS = [
   "Title",
@@ -67,37 +60,33 @@ export async function GET() {
     orderBy: { updatedAt: "desc" },
   });
 
-  const rows = leads.map((lead) =>
-    [
-      lead.title,
-      lead.contactName,
-      lead.contactPhone,
-      lead.contactEmail,
-      lead.whatsappNumber,
-      lead.country,
-      lead.state,
-      lead.city,
-      URGENCY_LABEL[lead.urgency],
-      lead.company,
-      lead.source,
-      lead.competitor === "OTHER" ? lead.competitorOther : lead.competitor ? COMPETITOR_LABEL[lead.competitor] : "",
-      lead.engagementType ? ENGAGEMENT_LABEL[lead.engagementType] : "",
-      lead.sourceUrl,
-      lead.requirementProfile?.title ?? "",
-      lead.details,
-      STATUS_LABEL[lead.status],
-      lead.freelancer.name,
-      lead.freelancer.email,
-      lead.qualifier?.name ?? "",
-      lead.salesManager?.name ?? "",
-      lead.createdAt.toISOString(),
-      lead.updatedAt.toISOString(),
-    ]
-      .map(csvField)
-      .join(","),
-  );
+  const rows = leads.map((lead) => [
+    lead.title,
+    lead.contactName,
+    lead.contactPhone,
+    lead.contactEmail,
+    lead.whatsappNumber,
+    lead.country,
+    lead.state,
+    lead.city,
+    URGENCY_LABEL[lead.urgency],
+    lead.company,
+    lead.source,
+    lead.competitor === "OTHER" ? lead.competitorOther : lead.competitor ? COMPETITOR_LABEL[lead.competitor] : "",
+    lead.engagementType ? ENGAGEMENT_LABEL[lead.engagementType] : "",
+    lead.sourceUrl,
+    lead.requirementProfile?.title ?? "",
+    lead.details,
+    STATUS_LABEL[lead.status],
+    lead.freelancer.name,
+    lead.freelancer.email,
+    lead.qualifier?.name ?? "",
+    lead.salesManager?.name ?? "",
+    lead.createdAt.toISOString(),
+    lead.updatedAt.toISOString(),
+  ]);
 
-  const csv = "﻿" + [COLUMNS.join(","), ...rows].join("\r\n");
+  const csv = toCsv(COLUMNS, rows);
   const date = new Date().toISOString().slice(0, 10);
 
   return new NextResponse(csv, {

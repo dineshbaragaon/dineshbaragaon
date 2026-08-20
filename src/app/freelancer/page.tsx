@@ -38,8 +38,14 @@ export default async function FreelancerPage() {
             <span className="font-medium text-orange-700">{needsReworkCount} need rework</span>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <ExportButton />
+          <Link
+            href="/freelancer/import"
+            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+          >
+            Import from Excel
+          </Link>
           <Link
             href="/freelancer/requirements"
             className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
