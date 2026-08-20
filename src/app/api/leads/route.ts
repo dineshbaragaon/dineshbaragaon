@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { leadInclude } from "@/lib/lead-query";
+import { validateLeadCore } from "@/lib/lead-validation";
 
 export async function GET() {
   const session = await getSession();
@@ -36,51 +37,12 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json();
-  const {
-    title,
-    contactName,
-    contactPhone,
-    contactEmail,
-    whatsappNumber,
-    country,
-    state,
-    city,
-    urgency,
-    company,
-    source,
-    competitor,
-    competitorOther,
-    sourceUrl,
-    engagementType,
-    details,
-    requirementProfileId,
-  } = body;
-
-  if (!title?.trim() || !contactName?.trim() || !details?.trim()) {
-    return NextResponse.json(
-      { error: "Title, contact name, and details are required" },
-      { status: 400 },
-    );
+  const validated = validateLeadCore(body);
+  if ("error" in validated) {
+    return NextResponse.json({ error: validated.error }, { status: 400 });
   }
-
-  if (!contactPhone?.trim() && !contactEmail?.trim() && !whatsappNumber?.trim()) {
-    return NextResponse.json(
-      { error: "Add at least one way to reach this lead: phone, email, or WhatsApp" },
-      { status: 400 },
-    );
-  }
-
-  if (urgency && !["LOW", "MEDIUM", "HIGH"].includes(urgency)) {
-    return NextResponse.json({ error: "Invalid urgency" }, { status: 400 });
-  }
-
-  if (competitor && !["AIRWALLEX", "PAYONEER", "WISE", "WORLDFIRST", "OTHER"].includes(competitor)) {
-    return NextResponse.json({ error: "Invalid competitor" }, { status: 400 });
-  }
-
-  if (engagementType && !["LIKED", "COMMENTED", "SHARED", "FOLLOWED", "OTHER"].includes(engagementType)) {
-    return NextResponse.json({ error: "Invalid engagement type" }, { status: 400 });
-  }
+  const core = validated.data;
+  const { requirementProfileId } = body;
 
   let validRequirementProfileId: string | null = null;
   if (requirementProfileId) {
@@ -99,22 +61,7 @@ export async function POST(req: Request) {
 
   const lead = await prisma.lead.create({
     data: {
-      title: title.trim(),
-      contactName: contactName.trim(),
-      contactPhone: contactPhone?.trim() || null,
-      contactEmail: contactEmail?.trim() || null,
-      whatsappNumber: whatsappNumber?.trim() || null,
-      country: country?.trim() || null,
-      state: state?.trim() || null,
-      city: city?.trim() || null,
-      urgency: urgency || "MEDIUM",
-      company: company?.trim() || null,
-      source: source?.trim() || null,
-      competitor: competitor || null,
-      competitorOther: competitor === "OTHER" ? competitorOther?.trim() || null : null,
-      sourceUrl: sourceUrl?.trim() || null,
-      engagementType: competitor ? engagementType || null : null,
-      details: details.trim(),
+      ...core,
       freelancerId: session.user.id,
       requirementProfileId: validRequirementProfileId,
       status: "NEW",
