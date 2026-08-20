@@ -168,7 +168,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         country,
         state,
         city,
-        urgency,
         company,
         source,
         details,
@@ -181,10 +180,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
           { error: "Add at least one way to reach this lead: phone, email, or WhatsApp" },
           { status: 400 },
         );
-      }
-
-      if (urgency && !["LOW", "MEDIUM", "HIGH"].includes(urgency)) {
-        return NextResponse.json({ error: "Invalid urgency" }, { status: 400 });
       }
 
       let validRequirementProfileId: string | null | undefined = undefined;
@@ -218,7 +213,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             country: country?.trim() || null,
             state: state?.trim() || null,
             city: city?.trim() || null,
-            ...(urgency ? { urgency } : {}),
             company: company?.trim() || null,
             source: source?.trim() || null,
             ...(details?.trim() ? { details: details.trim() } : {}),

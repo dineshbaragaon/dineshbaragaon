@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Competitor, EngagementType, LeadUrgency } from "@prisma/client";
-import { URGENCY_LABEL } from "@/lib/lead-urgency";
+import type { Competitor, EngagementType } from "@prisma/client";
 import { COMPETITOR_LABEL, ENGAGEMENT_LABEL } from "@/lib/lead-competitor";
 import { LocationSelect } from "@/components/LocationSelect";
 
@@ -16,7 +15,6 @@ const EMPTY_FORM = {
   country: "",
   state: "",
   city: "",
-  urgency: "MEDIUM" as LeadUrgency,
   company: "",
   source: "",
   competitor: "" as Competitor | "",
@@ -141,21 +139,6 @@ export function NewLeadForm({ profiles }: { profiles: ProfileOption[] }) {
           onChange={(v) => update("whatsappNumber", v)}
           placeholder="A number you've confirmed is reachable on WhatsApp"
         />
-
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Urgency</label>
-          <select
-            value={form.urgency}
-            onChange={(e) => update("urgency", e.target.value as LeadUrgency)}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-base outline-none focus:border-slate-500 sm:text-sm"
-          >
-            {(Object.keys(URGENCY_LABEL) as LeadUrgency[]).map((u) => (
-              <option key={u} value={u}>
-                {URGENCY_LABEL[u]}
-              </option>
-            ))}
-          </select>
-        </div>
 
         <Field label="Company" value={form.company} onChange={(v) => update("company", v)} />
         <Field
