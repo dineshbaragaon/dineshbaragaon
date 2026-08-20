@@ -62,7 +62,6 @@ export function ImportLeadsForm({ tagTitles }: { tagTitles: string[] }) {
 
         <div className="mt-4 rounded-lg bg-slate-50 p-4 text-xs text-slate-500">
           <p className="mb-1"><span className="font-medium text-slate-700">Required:</span> Title, Contact name, Details, and at least one of Phone number(s) / Email(s) / WhatsApp.</p>
-          <p className="mb-1"><span className="font-medium text-slate-700">Urgency:</span> LOW, MEDIUM, or HIGH (defaults to MEDIUM if left blank).</p>
           <p className="mb-1"><span className="font-medium text-slate-700">Competitor:</span> AIRWALLEX, PAYONEER, WISE, WORLDFIRST, or OTHER (optional).</p>
           {tagTitles.length > 0 ? (
             <p>

@@ -7,7 +7,6 @@ export const IMPORT_COLUMNS: { label: string; field: string }[] = [
   { label: "Country", field: "country" },
   { label: "State", field: "state" },
   { label: "City", field: "city" },
-  { label: "Urgency", field: "urgency" },
   { label: "Company", field: "company" },
   { label: "Source", field: "source" },
   { label: "Competitor", field: "competitor" },

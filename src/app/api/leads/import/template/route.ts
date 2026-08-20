@@ -18,7 +18,6 @@ export async function GET() {
     "United States",
     "California",
     "San Francisco",
-    "MEDIUM",
     "Acme Co",
     "LinkedIn",
     "",

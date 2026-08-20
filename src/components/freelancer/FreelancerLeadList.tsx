@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { LeadUrgency } from "@prisma/client";
 import type { LeadWithRelations } from "@/lib/types";
 import { StatusBadge } from "@/components/StatusBadge";
 import { CompetitorBadge } from "@/components/CompetitorBadge";
@@ -143,7 +142,6 @@ function ReworkForm({ lead, profiles }: { lead: LeadWithRelations; profiles: Pro
     country: lead.country ?? "",
     state: lead.state ?? "",
     city: lead.city ?? "",
-    urgency: lead.urgency,
     company: lead.company ?? "",
     source: lead.source ?? "",
     details: lead.details,
@@ -228,20 +226,6 @@ function ReworkForm({ lead, profiles }: { lead: LeadWithRelations; profiles: Pro
             value={{ country: form.country, state: form.state, city: form.city }}
             onChange={(loc) => setForm((f) => ({ ...f, ...loc }))}
           />
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Urgency</label>
-          <select
-            value={form.urgency}
-            onChange={(e) => update("urgency", e.target.value as LeadUrgency)}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-base outline-none focus:border-slate-500 sm:text-sm"
-          >
-            {(Object.keys(URGENCY_LABEL) as LeadUrgency[]).map((u) => (
-              <option key={u} value={u}>
-                {URGENCY_LABEL[u]}
-              </option>
-            ))}
-          </select>
         </div>
         <MiniField label="Company" value={form.company} onChange={(v) => update("company", v)} />
         <MiniField label="Source" value={form.source} onChange={(v) => update("source", v)} />
