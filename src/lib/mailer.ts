@@ -122,6 +122,22 @@ export function sendLeadAssignedEmail(params: {
   });
 }
 
+export function sendLeadsBulkAssignedEmail(params: {
+  to: string;
+  name: string;
+  count: number;
+  dashboardPath: string;
+}) {
+  return sendLinkEmail({
+    to: params.to,
+    subject: `${params.count} lead${params.count === 1 ? "" : "s"} assigned to you`,
+    heading: `${params.count} lead${params.count === 1 ? "" : "s"} assigned to you`,
+    intro: `Hi ${params.name}, ${params.count} lead${params.count === 1 ? " has" : "s have"} been assigned to you on LeadFlow.`,
+    buttonLabel: "View leads",
+    link: `${baseUrl()}${params.dashboardPath}`,
+  });
+}
+
 export function sendLeadStatusUpdateEmail(params: {
   to: string;
   name: string;

@@ -11,26 +11,9 @@ import { URGENCY_LABEL, URGENCY_COLOR } from "@/lib/lead-urgency";
 import { COMPETITOR_LABEL, ENGAGEMENT_LABEL } from "@/lib/lead-competitor";
 import { useLocationFilter } from "@/hooks/useLocationFilter";
 import { LocationFilterBar } from "@/components/LocationFilterBar";
+import { canAssignQualifier, canAssignSales } from "@/lib/lead-status-rules";
 
 type StaffOption = { id: string; name: string; email: string; activeCount: number };
-
-function canAssignQualifier(lead: LeadWithRelations): boolean {
-  return (
-    lead.status === "NEW" ||
-    lead.status === "IN_QUALIFICATION" ||
-    (lead.status === "NEEDS_REWORK" && lead.preReworkStatus === "IN_QUALIFICATION")
-  );
-}
-
-function canAssignSales(lead: LeadWithRelations): boolean {
-  return (
-    lead.status === "QUALIFIED" ||
-    lead.status === "ASSIGNED_TO_SALES" ||
-    lead.status === "IN_PROGRESS" ||
-    (lead.status === "NEEDS_REWORK" &&
-      (lead.preReworkStatus === "ASSIGNED_TO_SALES" || lead.preReworkStatus === "IN_PROGRESS"))
-  );
-}
 
 export function AdminLeadList({
   leads,
@@ -43,6 +26,7 @@ export function AdminLeadList({
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<"ALL" | "NEW" | "QUALIFIED" | "ACTIVE">("ALL");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const locationFilter = useLocationFilter(leads);
 
   const filtered = locationFilter.filtered.filter((l) => {
@@ -52,6 +36,25 @@ export function AdminLeadList({
     if (statusFilter === "ACTIVE") return l.status === "ASSIGNED_TO_SALES" || l.status === "IN_PROGRESS";
     return true;
   });
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    setSelectedIds((prev) => {
+      const allSelected = filtered.length > 0 && filtered.every((l) => prev.has(l.id));
+      return allSelected ? new Set() : new Set(filtered.map((l) => l.id));
+    });
+  }
+
+  const selectedLeads = filtered.filter((l) => selectedIds.has(l.id));
+  const allFilteredSelected = filtered.length > 0 && filtered.every((l) => selectedIds.has(l.id));
 
   return (
     <div>
@@ -77,49 +80,200 @@ export function AdminLeadList({
           No leads in this view.
         </div>
       ) : (
-        <ul className="space-y-3">
-          {filtered.map((lead) => (
-            <li key={lead.id} className="rounded-xl border border-slate-200 bg-white shadow-sm">
-              <button
-                onClick={() => setOpenId(openId === lead.id ? null : lead.id)}
-                className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
-              >
-                <div>
-                  <p className="font-medium text-slate-900">{lead.title}</p>
-                  <p className="text-sm text-slate-500">
-                    {lead.contactName}
-                    {lead.company ? ` · ${lead.company}` : ""} · from {lead.freelancer.name}
-                  </p>
+        <>
+          <div className="mb-2 flex items-center gap-2 px-1">
+            <label className="flex items-center gap-2 text-sm text-slate-500">
+              <input
+                type="checkbox"
+                checked={allFilteredSelected}
+                onChange={toggleSelectAll}
+                className="h-4 w-4 rounded border-slate-300"
+              />
+              Select all {filtered.length}
+            </label>
+          </div>
+
+          {selectedLeads.length > 0 && (
+            <BulkActionBar
+              selectedLeads={selectedLeads}
+              qualifiers={qualifiers}
+              salesManagers={salesManagers}
+              onClear={() => setSelectedIds(new Set())}
+            />
+          )}
+
+          <ul className="space-y-3">
+            {filtered.map((lead) => (
+              <li key={lead.id} className="rounded-xl border border-slate-200 bg-white shadow-sm">
+                <div className="flex items-center gap-1 px-3 pt-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(lead.id)}
+                    onChange={() => toggleSelect(lead.id)}
+                    className="h-4 w-4 shrink-0 rounded border-slate-300"
+                    aria-label={`Select ${lead.title}`}
+                  />
+                  <button
+                    onClick={() => setOpenId(openId === lead.id ? null : lead.id)}
+                    className="flex w-full items-center justify-between gap-3 px-2 py-2 text-left"
+                  >
+                    <div>
+                      <p className="font-medium text-slate-900">{lead.title}</p>
+                      <p className="text-sm text-slate-500">
+                        {lead.contactName}
+                        {lead.company ? ` · ${lead.company}` : ""} · from {lead.freelancer.name}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      <StatusBadge status={lead.status} />
+                      <div className="flex flex-wrap justify-end gap-1">
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${URGENCY_COLOR[lead.urgency]}`}>
+                          {URGENCY_LABEL[lead.urgency]}
+                        </span>
+                        <RequirementBadge profile={lead.requirementProfile} />
+                        <CompetitorBadge competitor={lead.competitor} competitorOther={lead.competitorOther} />
+                      </div>
+                    </div>
+                  </button>
                 </div>
-                <div className="flex shrink-0 flex-col items-end gap-1">
-                  <StatusBadge status={lead.status} />
-                  <div className="flex flex-wrap justify-end gap-1">
-                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${URGENCY_COLOR[lead.urgency]}`}>
-                      {URGENCY_LABEL[lead.urgency]}
-                    </span>
-                    <RequirementBadge profile={lead.requirementProfile} />
-                    <CompetitorBadge competitor={lead.competitor} competitorOther={lead.competitorOther} />
+
+                {openId === lead.id && (
+                  <div className="border-t border-slate-100 px-5 py-4">
+                    <LeadDetails lead={lead} />
+
+                    {canAssignQualifier(lead) && <AssignQualifier lead={lead} qualifiers={qualifiers} />}
+                    {canAssignSales(lead) && <AssignSales lead={lead} salesManagers={salesManagers} />}
+
+                    <div className="mt-4">
+                      <h4 className="mb-2 text-sm font-medium text-slate-700">Comments</h4>
+                      <CommentThread lead={lead} allowNewComment canMarkInternal />
+                    </div>
                   </div>
-                </div>
-              </button>
-
-              {openId === lead.id && (
-                <div className="border-t border-slate-100 px-5 py-4">
-                  <LeadDetails lead={lead} />
-
-                  {canAssignQualifier(lead) && <AssignQualifier lead={lead} qualifiers={qualifiers} />}
-                  {canAssignSales(lead) && <AssignSales lead={lead} salesManagers={salesManagers} />}
-
-                  <div className="mt-4">
-                    <h4 className="mb-2 text-sm font-medium text-slate-700">Comments</h4>
-                    <CommentThread lead={lead} allowNewComment canMarkInternal />
-                  </div>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
+                )}
+              </li>
+            ))}
+          </ul>
+        </>
       )}
+    </div>
+  );
+}
+
+function BulkActionBar({
+  selectedLeads,
+  qualifiers,
+  salesManagers,
+  onClear,
+}: {
+  selectedLeads: LeadWithRelations[];
+  qualifiers: StaffOption[];
+  salesManagers: StaffOption[];
+  onClear: () => void;
+}) {
+  const router = useRouter();
+  const [qualifierId, setQualifierId] = useState("");
+  const [salesManagerId, setSalesManagerId] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [notice, setNotice] = useState<{ text: string; ok: boolean } | null>(null);
+
+  const canBulkQualifier = selectedLeads.every(canAssignQualifier);
+  const canBulkSales = selectedLeads.every(canAssignSales);
+
+  async function runBulk(action: "assign_qualifier" | "assign_sales", targetId: string) {
+    setSubmitting(true);
+    setNotice(null);
+    const res = await fetch("/api/leads/bulk-assign", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action,
+        leadIds: selectedLeads.map((l) => l.id),
+        ...(action === "assign_qualifier" ? { qualifierId: targetId } : { salesManagerId: targetId }),
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setSubmitting(false);
+    if (!res.ok) {
+      setNotice({ text: data.error ?? "Bulk action failed", ok: false });
+      return;
+    }
+    const { succeeded, failed } = data as { succeeded: number; failed: { leadId: string; error: string }[] };
+    setNotice({
+      text:
+        failed.length === 0
+          ? `Assigned ${succeeded} lead${succeeded === 1 ? "" : "s"}.`
+          : `Assigned ${succeeded} lead${succeeded === 1 ? "" : "s"}, ${failed.length} failed.`,
+      ok: failed.length === 0,
+    });
+    router.refresh();
+  }
+
+  return (
+    <div
+      data-testid="bulk-action-bar"
+      className="mb-3 flex flex-wrap items-center gap-3 rounded-lg border border-slate-300 bg-slate-50 px-4 py-3"
+    >
+      <span className="text-sm font-medium text-slate-700">{selectedLeads.length} selected</span>
+
+      {canBulkQualifier && (
+        <div className="flex items-center gap-2">
+          <select
+            value={qualifierId}
+            onChange={(e) => setQualifierId(e.target.value)}
+            className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm outline-none focus:border-slate-500"
+          >
+            <option value="">Assign qualifier…</option>
+            {qualifiers.map((q) => (
+              <option key={q.id} value={q.id}>
+                {q.name} — {q.activeCount} reviewing now
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={() => qualifierId && runBulk("assign_qualifier", qualifierId)}
+            disabled={submitting || !qualifierId}
+            className="rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+          >
+            {submitting ? "Assigning…" : "Assign"}
+          </button>
+        </div>
+      )}
+
+      {canBulkSales && (
+        <div className="flex items-center gap-2">
+          <select
+            value={salesManagerId}
+            onChange={(e) => setSalesManagerId(e.target.value)}
+            className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm outline-none focus:border-slate-500"
+          >
+            <option value="">Assign sales manager…</option>
+            {salesManagers.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name} — {s.activeCount} active lead{s.activeCount === 1 ? "" : "s"}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={() => salesManagerId && runBulk("assign_sales", salesManagerId)}
+            disabled={submitting || !salesManagerId}
+            className="rounded-lg bg-emerald-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-800 disabled:opacity-50"
+          >
+            {submitting ? "Assigning…" : "Assign"}
+          </button>
+        </div>
+      )}
+
+      {!canBulkQualifier && !canBulkSales && (
+        <span className="text-sm text-amber-700">
+          Selected leads must all be in the same stage (all awaiting qualification, or all qualified/with sales) to bulk-assign.
+        </span>
+      )}
+
+      <button onClick={onClear} className="ml-auto text-sm font-medium text-slate-500 hover:text-slate-700">
+        Clear selection
+      </button>
+
+      {notice && <p className={`w-full text-sm ${notice.ok ? "text-emerald-700" : "text-amber-700"}`}>{notice.text}</p>}
     </div>
   );
 }
