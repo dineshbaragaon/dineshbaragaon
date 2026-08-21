@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { leadIncludeFor } from "@/lib/lead-query";
 import { ROLE_HOME } from "@/lib/roles";
+import { assignQualifierCore, assignSalesCore } from "@/lib/lead-assignment";
+import { canAssignQualifier, canAssignSales } from "@/lib/lead-status-rules";
 import {
   sendLeadAssignedEmail,
   sendLeadStatusUpdateEmail,
@@ -35,11 +37,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       if (user.role !== "ADMIN") {
         return NextResponse.json({ error: "Only admin can assign a qualifier" }, { status: 403 });
       }
-      const canAssign =
-        lead.status === "NEW" ||
-        lead.status === "IN_QUALIFICATION" ||
-        (lead.status === "NEEDS_REWORK" && lead.preReworkStatus === "IN_QUALIFICATION");
-      if (!canAssign) {
+      if (!canAssignQualifier(lead)) {
         return NextResponse.json({ error: "Lead is past the qualification stage" }, { status: 400 });
       }
       const { qualifierId } = body;
@@ -47,35 +45,23 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       if (!qualifier || qualifier.role !== "QUALIFIER" || !qualifier.active) {
         return NextResponse.json({ error: "Invalid qualifier" }, { status: 400 });
       }
-      const previousQualifier = lead.qualifierId && lead.qualifierId !== qualifierId
-        ? await prisma.user.findUnique({ where: { id: lead.qualifierId }, select: { name: true } })
-        : null;
-      const updated = await prisma.$transaction(async (tx) => {
-        const updatedLead = await tx.lead.update({
-          where: { id },
-          data: {
-            qualifierId,
-            ...(lead.status !== "NEEDS_REWORK" ? { status: "IN_QUALIFICATION" as const } : {}),
-          },
-          include: leadIncludeFor(user.role),
-        });
-        await tx.comment.create({
-          data: {
-            leadId: id,
-            authorId: user.id,
-            body: previousQualifier
-              ? `Reassigned from ${previousQualifier.name} to ${qualifier.name} for qualification.`
-              : `Assigned to ${qualifier.name} for qualification.`,
-          },
-        });
-        return updatedLead;
+      const wasAssignedBefore = Boolean(lead.qualifierId && lead.qualifierId !== qualifierId);
+      const result = await assignQualifierCore({
+        lead,
+        qualifierId,
+        qualifierName: qualifier.name,
+        actorId: user.id,
       });
+      if (!result.ok) {
+        return NextResponse.json({ error: result.error }, { status: 400 });
+      }
+      const updated = await prisma.lead.findUnique({ where: { id }, include: leadIncludeFor(user.role) });
       await sendLeadAssignedEmail({
         to: qualifier.email,
         name: qualifier.name,
-        leadTitle: updated.title,
+        leadTitle: updated!.title,
         dashboardPath: ROLE_HOME.QUALIFIER,
-        reassigned: Boolean(previousQualifier),
+        reassigned: wasAssignedBefore,
       });
       return NextResponse.json({ lead: updated });
     }
@@ -84,13 +70,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       if (user.role !== "ADMIN") {
         return NextResponse.json({ error: "Only admin can assign a sales manager" }, { status: 403 });
       }
-      const canAssign =
-        lead.status === "QUALIFIED" ||
-        lead.status === "ASSIGNED_TO_SALES" ||
-        lead.status === "IN_PROGRESS" ||
-        (lead.status === "NEEDS_REWORK" &&
-          (lead.preReworkStatus === "ASSIGNED_TO_SALES" || lead.preReworkStatus === "IN_PROGRESS"));
-      if (!canAssign) {
+      if (!canAssignSales(lead)) {
         return NextResponse.json({ error: "Lead must be qualified before assigning to sales" }, { status: 400 });
       }
       const { salesManagerId } = body;
@@ -98,35 +78,23 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       if (!salesManager || salesManager.role !== "SALES_MANAGER" || !salesManager.active) {
         return NextResponse.json({ error: "Invalid sales manager" }, { status: 400 });
       }
-      const previousSalesManager = lead.salesManagerId && lead.salesManagerId !== salesManagerId
-        ? await prisma.user.findUnique({ where: { id: lead.salesManagerId }, select: { name: true } })
-        : null;
-      const updated = await prisma.$transaction(async (tx) => {
-        const updatedLead = await tx.lead.update({
-          where: { id },
-          data: {
-            salesManagerId,
-            ...(lead.status === "QUALIFIED" ? { status: "ASSIGNED_TO_SALES" as const } : {}),
-          },
-          include: leadIncludeFor(user.role),
-        });
-        await tx.comment.create({
-          data: {
-            leadId: id,
-            authorId: user.id,
-            body: previousSalesManager
-              ? `Reassigned from ${previousSalesManager.name} to ${salesManager.name} for sales follow-up.`
-              : `Assigned to ${salesManager.name} for sales follow-up.`,
-          },
-        });
-        return updatedLead;
+      const wasAssignedBefore = Boolean(lead.salesManagerId && lead.salesManagerId !== salesManagerId);
+      const result = await assignSalesCore({
+        lead,
+        salesManagerId,
+        salesManagerName: salesManager.name,
+        actorId: user.id,
       });
+      if (!result.ok) {
+        return NextResponse.json({ error: result.error }, { status: 400 });
+      }
+      const updated = await prisma.lead.findUnique({ where: { id }, include: leadIncludeFor(user.role) });
       await sendLeadAssignedEmail({
         to: salesManager.email,
         name: salesManager.name,
-        leadTitle: updated.title,
+        leadTitle: updated!.title,
         dashboardPath: ROLE_HOME.SALES_MANAGER,
-        reassigned: Boolean(previousSalesManager),
+        reassigned: wasAssignedBefore,
       });
       return NextResponse.json({ lead: updated });
     }
