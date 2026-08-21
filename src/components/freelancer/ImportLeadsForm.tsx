@@ -63,6 +63,7 @@ export function ImportLeadsForm({ tagTitles }: { tagTitles: string[] }) {
         <div className="mt-4 rounded-lg bg-slate-50 p-4 text-xs text-slate-500">
           <p className="mb-1"><span className="font-medium text-slate-700">Required:</span> Title, Contact name, Details, and at least one of Phone number(s) / Email(s) / WhatsApp.</p>
           <p className="mb-1"><span className="font-medium text-slate-700">Competitor:</span> AIRWALLEX, PAYONEER, WISE, WORLDFIRST, or OTHER (optional).</p>
+          <p className="mb-1"><span className="font-medium text-slate-700">Avoid quote marks (&quot;)</span> inside any cell — e.g. don&apos;t write <span className="italic">Client wants &quot;priority&quot; support</span>. Quote marks have a special meaning in CSV files and can break the file.</p>
           {tagTitles.length > 0 ? (
             <p>
               <span className="font-medium text-slate-700">Requirement tag:</span> optional — type it exactly as shown to
