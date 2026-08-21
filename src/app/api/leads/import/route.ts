@@ -33,7 +33,19 @@ export async function POST(req: Request) {
   });
 
   if (parsed.errors.length > 0) {
-    return NextResponse.json({ error: `Could not read the file: ${parsed.errors[0].message}` }, { status: 400 });
+    const rowNumbers = [...new Set(parsed.errors.map((e) => e.row).filter((r): r is number => typeof r === "number"))]
+      .map((r) => r + 1)
+      .sort((a, b) => a - b);
+    const rowHint =
+      rowNumbers.length > 0
+        ? `Row ${rowNumbers[0]}${rowNumbers.length > 1 ? ` (and ${rowNumbers.length - 1} more)` : ""} has a problem with quote marks (") that broke the file's structure`
+        : "The file has a formatting problem";
+    return NextResponse.json(
+      {
+        error: `Could not read the file — ${rowHint}. A common cause: typing a quoted word or phrase (like "priority") inside a cell. Open the file, remove or fix the quote marks in that row, save it again, and re-upload.`,
+      },
+      { status: 400 },
+    );
   }
 
   const recognizedHeader = (parsed.meta.fields ?? []).some((h) => IMPORT_HEADER_MAP[h]);
