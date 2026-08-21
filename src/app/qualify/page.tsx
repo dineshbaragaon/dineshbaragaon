@@ -1,6 +1,6 @@
 import { requireRole } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { leadInclude } from "@/lib/lead-query";
+import { leadIncludeFor } from "@/lib/lead-query";
 import { Shell } from "@/components/Shell";
 import { QualifierLeadList } from "@/components/qualify/QualifierLeadList";
 import { ExportButton } from "@/components/ExportButton";
@@ -10,7 +10,7 @@ export default async function QualifyPage() {
 
   const leads = await prisma.lead.findMany({
     where: { qualifierId: user.id },
-    include: leadInclude,
+    include: leadIncludeFor(user.role),
     orderBy: { updatedAt: "desc" },
   });
 

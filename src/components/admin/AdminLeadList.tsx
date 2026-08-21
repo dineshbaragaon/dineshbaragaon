@@ -14,6 +14,24 @@ import { LocationFilterBar } from "@/components/LocationFilterBar";
 
 type StaffOption = { id: string; name: string; email: string; activeCount: number };
 
+function canAssignQualifier(lead: LeadWithRelations): boolean {
+  return (
+    lead.status === "NEW" ||
+    lead.status === "IN_QUALIFICATION" ||
+    (lead.status === "NEEDS_REWORK" && lead.preReworkStatus === "IN_QUALIFICATION")
+  );
+}
+
+function canAssignSales(lead: LeadWithRelations): boolean {
+  return (
+    lead.status === "QUALIFIED" ||
+    lead.status === "ASSIGNED_TO_SALES" ||
+    lead.status === "IN_PROGRESS" ||
+    (lead.status === "NEEDS_REWORK" &&
+      (lead.preReworkStatus === "ASSIGNED_TO_SALES" || lead.preReworkStatus === "IN_PROGRESS"))
+  );
+}
+
 export function AdminLeadList({
   leads,
   qualifiers,
@@ -89,12 +107,12 @@ export function AdminLeadList({
                 <div className="border-t border-slate-100 px-5 py-4">
                   <LeadDetails lead={lead} />
 
-                  {lead.status === "NEW" && <AssignQualifier lead={lead} qualifiers={qualifiers} />}
-                  {lead.status === "QUALIFIED" && <AssignSales lead={lead} salesManagers={salesManagers} />}
+                  {canAssignQualifier(lead) && <AssignQualifier lead={lead} qualifiers={qualifiers} />}
+                  {canAssignSales(lead) && <AssignSales lead={lead} salesManagers={salesManagers} />}
 
                   <div className="mt-4">
                     <h4 className="mb-2 text-sm font-medium text-slate-700">Comments</h4>
-                    <CommentThread lead={lead} allowNewComment />
+                    <CommentThread lead={lead} allowNewComment canMarkInternal />
                   </div>
                 </div>
               )}
@@ -157,7 +175,8 @@ function Detail({ label, value, link }: { label: string; value?: string | null; 
 
 function AssignQualifier({ lead, qualifiers }: { lead: LeadWithRelations; qualifiers: StaffOption[] }) {
   const router = useRouter();
-  const [qualifierId, setQualifierId] = useState("");
+  const isReassign = Boolean(lead.qualifier);
+  const [qualifierId, setQualifierId] = useState(lead.qualifier?.id ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -190,7 +209,9 @@ function AssignQualifier({ lead, qualifiers }: { lead: LeadWithRelations; qualif
   return (
     <div className="mb-4 flex flex-wrap items-end gap-2 rounded-lg border border-slate-200 bg-slate-50 p-4">
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700">Assign to team member for qualification</label>
+        <label className="mb-1 block text-sm font-medium text-slate-700">
+          {isReassign ? `Reassign for qualification (currently ${lead.qualifier?.name})` : "Assign to team member for qualification"}
+        </label>
         <select
           value={qualifierId}
           onChange={(e) => setQualifierId(e.target.value)}
@@ -206,10 +227,10 @@ function AssignQualifier({ lead, qualifiers }: { lead: LeadWithRelations; qualif
       </div>
       <button
         onClick={assign}
-        disabled={submitting || !qualifierId}
+        disabled={submitting || !qualifierId || qualifierId === lead.qualifier?.id}
         className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
       >
-        {submitting ? "Assigning…" : "Assign"}
+        {submitting ? "Saving…" : isReassign ? "Reassign" : "Assign"}
       </button>
       {error && <p className="w-full text-sm text-red-600">{error}</p>}
     </div>
@@ -218,7 +239,8 @@ function AssignQualifier({ lead, qualifiers }: { lead: LeadWithRelations; qualif
 
 function AssignSales({ lead, salesManagers }: { lead: LeadWithRelations; salesManagers: StaffOption[] }) {
   const router = useRouter();
-  const [salesManagerId, setSalesManagerId] = useState("");
+  const isReassign = Boolean(lead.salesManager);
+  const [salesManagerId, setSalesManagerId] = useState(lead.salesManager?.id ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -251,7 +273,9 @@ function AssignSales({ lead, salesManagers }: { lead: LeadWithRelations; salesMa
   return (
     <div className="mb-4 flex flex-wrap items-end gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700">Assign to sales manager</label>
+        <label className="mb-1 block text-sm font-medium text-slate-700">
+          {isReassign ? `Reassign to sales manager (currently ${lead.salesManager?.name})` : "Assign to sales manager"}
+        </label>
         <select
           value={salesManagerId}
           onChange={(e) => setSalesManagerId(e.target.value)}
@@ -267,10 +291,10 @@ function AssignSales({ lead, salesManagers }: { lead: LeadWithRelations; salesMa
       </div>
       <button
         onClick={assign}
-        disabled={submitting || !salesManagerId}
+        disabled={submitting || !salesManagerId || salesManagerId === lead.salesManager?.id}
         className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800 disabled:opacity-50"
       >
-        {submitting ? "Assigning…" : "Assign"}
+        {submitting ? "Saving…" : isReassign ? "Reassign" : "Assign"}
       </button>
       {error && <p className="w-full text-sm text-red-600">{error}</p>}
     </div>

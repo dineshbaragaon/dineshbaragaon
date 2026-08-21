@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireRole } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { leadInclude } from "@/lib/lead-query";
+import { leadIncludeFor } from "@/lib/lead-query";
 import { Shell } from "@/components/Shell";
 import { AdminLeadList } from "@/components/admin/AdminLeadList";
 import { ExportButton } from "@/components/ExportButton";
@@ -10,7 +10,7 @@ export default async function AdminPage() {
   const user = await requireRole("ADMIN");
 
   const [leads, qualifiers, salesManagers] = await Promise.all([
-    prisma.lead.findMany({ include: leadInclude, orderBy: { updatedAt: "desc" } }),
+    prisma.lead.findMany({ include: leadIncludeFor(user.role), orderBy: { updatedAt: "desc" } }),
     prisma.user.findMany({
       where: { role: "QUALIFIER", active: true },
       select: { id: true, name: true, email: true },

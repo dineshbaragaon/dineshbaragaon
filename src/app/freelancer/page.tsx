@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireRole } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { leadInclude } from "@/lib/lead-query";
+import { leadIncludeFor } from "@/lib/lead-query";
 import { Shell } from "@/components/Shell";
 import { FreelancerLeadList } from "@/components/freelancer/FreelancerLeadList";
 import { ExportButton } from "@/components/ExportButton";
@@ -12,7 +12,7 @@ export default async function FreelancerPage() {
   const [leads, assignments] = await Promise.all([
     prisma.lead.findMany({
       where: { freelancerId: user.id },
-      include: leadInclude,
+      include: leadIncludeFor(user.role),
       orderBy: { updatedAt: "desc" },
     }),
     prisma.requirementAssignment.findMany({

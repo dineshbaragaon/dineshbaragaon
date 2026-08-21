@@ -136,6 +136,7 @@ model RequirementAssignment {
 model Comment {
   id        String   @id @default(cuid())
   body      String
+  internal  Boolean  @default(false)
   createdAt DateTime @default(now())
 
   lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)

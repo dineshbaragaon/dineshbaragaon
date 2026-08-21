@@ -69,7 +69,7 @@ export function QualifierLeadList({ leads }: { leads: LeadWithRelations[] }) {
 
               <div className="mt-4">
                 <h4 className="mb-2 text-sm font-medium text-slate-700">Comments</h4>
-                <CommentThread lead={lead} allowNewComment />
+                <CommentThread lead={lead} allowNewComment canMarkInternal />
               </div>
             </div>
           )}
