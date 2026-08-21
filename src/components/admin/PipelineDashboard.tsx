@@ -19,7 +19,7 @@ export function PipelineDashboard({ stats }: { stats: PipelineStats }) {
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard label="Total leads" value={stats.total} />
         <StatCard label="Open pipeline" value={stats.openPipeline} />
-        <StatCard label="Converted" value={stats.convertedCount} accent="text-emerald-700" />
+        <StatCard label="Deal agreed" value={stats.convertedCount} accent="text-emerald-700" />
         <StatCard label="Conversion rate" value={pct(stats.conversionRate)} accent="text-emerald-700" />
       </section>
 
@@ -44,7 +44,7 @@ export function PipelineDashboard({ stats }: { stats: PipelineStats }) {
           <EmptyRow text="No leads assigned to sales yet." />
         ) : (
           <Table
-            columns={["Sales manager", "Active", "Converted", "Closed", "Conversion"]}
+            columns={["Sales manager", "Active", "Deal agreed", "Closed", "Conversion"]}
             rows={stats.salesManagers.map((s) => [
               s.name,
               <BarCell key="active" value={s.active} max={maxOf(stats.salesManagers, "active")} />,
@@ -75,9 +75,9 @@ export function PipelineDashboard({ stats }: { stats: PipelineStats }) {
       </section>
 
       <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
-        <TableHeader title="Freelancer lead-gen performance" subtitle="Ranked by leads actually converted, not just volume submitted" />
+        <TableHeader title="Freelancer lead-gen performance" subtitle="Ranked by leads that actually got a deal agreed, not just volume submitted" />
         <Table
-          columns={["Freelancer", "Submitted", "Qualified", "Converted", "Conversion"]}
+          columns={["Freelancer", "Submitted", "Qualified", "Deal agreed", "Conversion"]}
           rows={stats.freelancers.map((f) => [
             f.name,
             f.total,
@@ -94,7 +94,7 @@ export function PipelineDashboard({ stats }: { stats: PipelineStats }) {
           <EmptyRow text="No tagged leads yet." />
         ) : (
           <Table
-            columns={["Tag", "Leads", "Converted", "Conversion"]}
+            columns={["Tag", "Leads", "Deal agreed", "Conversion"]}
             rows={stats.tags.map((t) => [
               t.title,
               <BarCell key="total" value={t.total} max={maxOf(stats.tags, "total")} />,

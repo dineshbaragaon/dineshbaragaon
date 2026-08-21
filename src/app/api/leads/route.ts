@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { leadInclude } from "@/lib/lead-query";
+import { leadIncludeFor } from "@/lib/lead-query";
 import { validateLeadCore } from "@/lib/lead-validation";
 
 export async function GET() {
@@ -23,7 +23,7 @@ export async function GET() {
 
   const leads = await prisma.lead.findMany({
     where,
-    include: leadInclude,
+    include: leadIncludeFor(role),
     orderBy: { updatedAt: "desc" },
   });
 
@@ -66,7 +66,7 @@ export async function POST(req: Request) {
       requirementProfileId: validRequirementProfileId,
       status: "NEW",
     },
-    include: leadInclude,
+    include: leadIncludeFor(session.user.role),
   });
 
   return NextResponse.json({ lead }, { status: 201 });

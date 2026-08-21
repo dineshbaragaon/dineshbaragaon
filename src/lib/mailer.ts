@@ -105,6 +105,50 @@ export function sendRequirementProfileUpdatedEmail(params: { to: string; name: s
   });
 }
 
+export function sendLeadAssignedEmail(params: {
+  to: string;
+  name: string;
+  leadTitle: string;
+  dashboardPath: string;
+  reassigned?: boolean;
+}) {
+  return sendLinkEmail({
+    to: params.to,
+    subject: `${params.reassigned ? "Reassigned" : "New"} lead: ${params.leadTitle}`,
+    heading: params.reassigned ? "A lead was reassigned to you" : "A new lead was assigned to you",
+    intro: `Hi ${params.name}, "${params.leadTitle}" has been ${params.reassigned ? "reassigned" : "assigned"} to you on LeadFlow.`,
+    buttonLabel: "View lead",
+    link: `${baseUrl()}${params.dashboardPath}`,
+  });
+}
+
+export function sendLeadStatusUpdateEmail(params: {
+  to: string;
+  name: string;
+  heading: string;
+  message: string;
+}) {
+  return sendLinkEmail({
+    to: params.to,
+    subject: params.heading,
+    heading: params.heading,
+    intro: `Hi ${params.name}, ${params.message}`,
+    buttonLabel: "View my leads",
+    link: `${baseUrl()}/freelancer`,
+  });
+}
+
+export function sendLeadResubmittedEmail(params: { to: string; name: string; leadTitle: string; dashboardPath: string }) {
+  return sendLinkEmail({
+    to: params.to,
+    subject: `Lead resubmitted: ${params.leadTitle}`,
+    heading: "A lead was resubmitted for your review",
+    intro: `Hi ${params.name}, "${params.leadTitle}" was updated and resubmitted after rework — it's ready for another look.`,
+    buttonLabel: "View lead",
+    link: `${baseUrl()}${params.dashboardPath}`,
+  });
+}
+
 function escapeHtml(str: string): string {
   return str.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 }

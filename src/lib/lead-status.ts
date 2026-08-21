@@ -8,7 +8,7 @@ export const STATUS_LABEL: Record<LeadStatus, string> = {
   QUALIFIED: "Qualified",
   ASSIGNED_TO_SALES: "Assigned to sales",
   IN_PROGRESS: "In progress",
-  CONVERTED: "Converted",
+  CONVERTED: "Deal Agreed",
   CLOSED: "Closed",
 };
 

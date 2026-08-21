@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { leadInclude } from "@/lib/lead-query";
+import { leadIncludeFor } from "@/lib/lead-query";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
@@ -26,15 +26,20 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ error: "Not authorized for this lead" }, { status: 403 });
   }
 
-  const { body } = await req.json();
+  const { body, internal } = await req.json();
   if (!body?.trim()) {
     return NextResponse.json({ error: "Comment cannot be empty" }, { status: 400 });
   }
 
   await prisma.comment.create({
-    data: { leadId: id, authorId: user.id, body: body.trim() },
+    data: {
+      leadId: id,
+      authorId: user.id,
+      body: body.trim(),
+      internal: user.role === "FREELANCER" ? false : Boolean(internal),
+    },
   });
 
-  const updated = await prisma.lead.findUnique({ where: { id }, include: leadInclude });
+  const updated = await prisma.lead.findUnique({ where: { id }, include: leadIncludeFor(user.role) });
   return NextResponse.json({ lead: updated });
 }

@@ -71,7 +71,7 @@ export function SalesLeadList({ leads }: { leads: LeadWithRelations[] }) {
 
               <div className="mt-4">
                 <h4 className="mb-2 text-sm font-medium text-slate-700">Comments</h4>
-                <CommentThread lead={lead} allowNewComment />
+                <CommentThread lead={lead} allowNewComment canMarkInternal />
               </div>
             </div>
           )}
@@ -130,7 +130,7 @@ function Detail({ label, value, link }: { label: string; value?: string | null; 
 
 const ACTIONS = [
   { value: "IN_PROGRESS", label: "Mark in progress", commentRequired: false, style: "bg-indigo-700 hover:bg-indigo-800" },
-  { value: "CONVERTED", label: "Mark converted", commentRequired: false, style: "bg-green-700 hover:bg-green-800" },
+  { value: "CONVERTED", label: "Mark deal agreed", commentRequired: false, style: "bg-green-700 hover:bg-green-800" },
   { value: "CLOSED", label: "Close (lost)", commentRequired: false, style: "bg-slate-700 hover:bg-slate-800" },
   { value: "NEEDS_REWORK", label: "Send back to freelancer", commentRequired: true, style: "bg-orange-700 hover:bg-orange-800" },
 ] as const;
