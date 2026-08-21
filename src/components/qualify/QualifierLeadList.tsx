@@ -102,7 +102,7 @@ function LeadDetails({ lead }: { lead: LeadWithRelations }) {
       <Detail label="Freelancer email" value={lead.freelancer.email} />
       <div className="col-span-full">
         <dt className="text-slate-400">Details</dt>
-        <dd className="whitespace-pre-wrap text-slate-700">{lead.details}</dd>
+        <dd className="whitespace-pre-wrap break-words text-slate-700">{lead.details}</dd>
       </div>
     </dl>
   );
@@ -113,7 +113,7 @@ function Detail({ label, value, link }: { label: string; value?: string | null; 
   return (
     <div>
       <dt className="text-slate-400">{label}</dt>
-      <dd className="whitespace-pre-wrap text-slate-700">
+      <dd className="whitespace-pre-wrap break-words text-slate-700">
         {link ? (
           <a href={value} target="_blank" rel="noopener noreferrer" className="text-blue-700 underline break-all">
             {value}
