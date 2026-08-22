@@ -16,6 +16,8 @@ export default async function SalesPage() {
 
   const activeCount = leads.filter((l) => l.status === "ASSIGNED_TO_SALES" || l.status === "IN_PROGRESS").length;
   const convertedCount = leads.filter((l) => l.status === "CONVERTED").length;
+  const registeredCount = leads.filter((l) => l.registered).length;
+  const transactionLiveCount = leads.filter((l) => l.transactionLive).length;
 
   return (
     <Shell
@@ -29,6 +31,10 @@ export default async function SalesPage() {
           <span>{leads.length} total</span>
           <span className="font-medium text-indigo-700">{activeCount} active</span>
           <span className="font-medium text-green-700">{convertedCount} deal agreed</span>
+          {registeredCount > 0 && <span className="font-medium text-sky-700">{registeredCount} registered</span>}
+          {transactionLiveCount > 0 && (
+            <span className="font-medium text-purple-700">{transactionLiveCount} transaction live</span>
+          )}
         </div>
         <ExportButton />
       </div>

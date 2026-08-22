@@ -3,6 +3,8 @@ import { STATUS_LABEL } from "@/lib/lead-status";
 
 type LeadForStats = {
   status: LeadStatus;
+  registered: boolean;
+  transactionLive: boolean;
   freelancer: { id: string; name: string };
   qualifier: { id: string; name: string } | null;
   salesManager: { id: string; name: string } | null;
@@ -41,6 +43,8 @@ export type SalesManagerStat = PersonStat & {
   converted: number;
   closed: number;
   conversionRate: number;
+  registered: number;
+  transactionLive: number;
 };
 
 export type QualifierStat = PersonStat & {
@@ -69,6 +73,8 @@ export type PipelineStats = {
   openPipeline: number;
   convertedCount: number;
   conversionRate: number;
+  registeredCount: number;
+  transactionLiveCount: number;
   funnel: FunnelStage[];
   offPath: FunnelStage[];
   salesManagers: SalesManagerStat[];
@@ -87,6 +93,8 @@ export function computePipelineStats(leads: LeadForStats[]): PipelineStats {
   const total = leads.length;
   const convertedCount = statusCounts.CONVERTED;
   const openPipeline = total - convertedCount - statusCounts.CLOSED - statusCounts.REJECTED;
+  const registeredCount = leads.filter((l) => l.registered).length;
+  const transactionLiveCount = leads.filter((l) => l.transactionLive).length;
 
   const funnel = FUNNEL_STAGES.map((status) => ({
     status,
@@ -109,11 +117,23 @@ export function computePipelineStats(leads: LeadForStats[]): PipelineStats {
     if (lead.salesManager) {
       const s =
         salesManagerMap.get(lead.salesManager.id) ??
-        ({ id: lead.salesManager.id, name: lead.salesManager.name, total: 0, active: 0, converted: 0, closed: 0, conversionRate: 0 } satisfies SalesManagerStat);
+        ({
+          id: lead.salesManager.id,
+          name: lead.salesManager.name,
+          total: 0,
+          active: 0,
+          converted: 0,
+          closed: 0,
+          conversionRate: 0,
+          registered: 0,
+          transactionLive: 0,
+        } satisfies SalesManagerStat);
       s.total++;
       if (lead.status === "ASSIGNED_TO_SALES" || lead.status === "IN_PROGRESS") s.active++;
       if (lead.status === "CONVERTED") s.converted++;
       if (lead.status === "CLOSED") s.closed++;
+      if (lead.registered) s.registered++;
+      if (lead.transactionLive) s.transactionLive++;
       salesManagerMap.set(lead.salesManager.id, s);
     }
 
@@ -171,6 +191,8 @@ export function computePipelineStats(leads: LeadForStats[]): PipelineStats {
     openPipeline,
     convertedCount,
     conversionRate: total > 0 ? convertedCount / total : 0,
+    registeredCount,
+    transactionLiveCount,
     funnel,
     offPath,
     salesManagers,

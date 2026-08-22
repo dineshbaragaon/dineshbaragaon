@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { CompetitorBadge } from "@/components/CompetitorBadge";
 import { RequirementBadge } from "@/components/RequirementBadge";
 import { CommentThread } from "@/components/CommentThread";
+import { MilestoneBadges } from "@/components/MilestoneBadges";
 import { URGENCY_LABEL, URGENCY_COLOR } from "@/lib/lead-urgency";
 import { COMPETITOR_LABEL, ENGAGEMENT_LABEL } from "@/lib/lead-competitor";
 import { useLocationFilter } from "@/hooks/useLocationFilter";
@@ -51,6 +52,7 @@ export function QualifierLeadList({ leads }: { leads: LeadWithRelations[] }) {
             </div>
             <div className="flex shrink-0 flex-col items-end gap-1">
               <StatusBadge status={lead.status} />
+              <MilestoneBadges registered={lead.registered} transactionLive={lead.transactionLive} />
               <div className="flex flex-wrap justify-end gap-1">
                 <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${URGENCY_COLOR[lead.urgency]}`}>
                   {URGENCY_LABEL[lead.urgency]}
@@ -100,6 +102,22 @@ function LeadDetails({ lead }: { lead: LeadWithRelations }) {
       <Detail label="Requirement tag" value={lead.requirementProfile?.title} />
       <Detail label="Freelancer" value={lead.freelancer.name} />
       <Detail label="Freelancer email" value={lead.freelancer.email} />
+      {lead.status === "CONVERTED" && (
+        <>
+          <Detail
+            label="Registered"
+            value={lead.registered ? `Yes${lead.registeredAt ? ` — ${new Date(lead.registeredAt).toLocaleDateString()}` : ""}` : "Not yet"}
+          />
+          <Detail
+            label="1st transaction live"
+            value={
+              lead.transactionLive
+                ? `Yes${lead.transactionLiveAt ? ` — ${new Date(lead.transactionLiveAt).toLocaleDateString()}` : ""}`
+                : "Not yet"
+            }
+          />
+        </>
+      )}
       <div className="col-span-full">
         <dt className="text-slate-400">Details</dt>
         <dd className="whitespace-pre-wrap break-words text-slate-700">{lead.details}</dd>
