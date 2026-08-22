@@ -49,47 +49,51 @@ enum EngagementType {
 }
 
 model User {
-  id                       String    @id @default(cuid())
-  name                     String
-  email                    String    @unique
-  passwordHash             String?
-  passwordSetToken         String?   @unique
-  passwordSetTokenExpires  DateTime?
-  role                     Role
-  active                   Boolean   @default(true)
-  createdAt                DateTime  @default(now())
+  id                      String    @id @default(cuid())
+  name                    String
+  email                   String    @unique
+  passwordHash            String?
+  passwordSetToken        String?   @unique
+  passwordSetTokenExpires DateTime?
+  role                    Role
+  active                  Boolean   @default(true)
+  createdAt               DateTime  @default(now())
 
   leadsSubmitted Lead[]    @relation("FreelancerLeads")
   leadsToQualify Lead[]    @relation("QualifierLeads")
   leadsToSell    Lead[]    @relation("SalesManagerLeads")
   comments       Comment[]
 
-  profilesCreated    RequirementProfile[]     @relation("ProfilesCreated")
-  profileAssignments RequirementAssignment[]  @relation("ProfileAssignments")
+  profilesCreated    RequirementProfile[]    @relation("ProfilesCreated")
+  profileAssignments RequirementAssignment[] @relation("ProfileAssignments")
 }
 
 model Lead {
-  id              String          @id @default(cuid())
-  title           String
-  contactName     String
-  contactPhone    String?
-  contactEmail    String?
-  whatsappNumber  String?
-  country         String?
-  state           String?
-  city            String?
-  urgency         LeadUrgency     @default(MEDIUM)
-  company         String?
-  source          String?
-  competitor      Competitor?
-  competitorOther String?
-  sourceUrl       String?
-  engagementType  EngagementType?
-  details         String
-  status          LeadStatus      @default(NEW)
-  preReworkStatus LeadStatus?
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  id                String          @id @default(cuid())
+  title             String
+  contactName       String
+  contactPhone      String?
+  contactEmail      String?
+  whatsappNumber    String?
+  country           String?
+  state             String?
+  city              String?
+  urgency           LeadUrgency     @default(MEDIUM)
+  company           String?
+  source            String?
+  competitor        Competitor?
+  competitorOther   String?
+  sourceUrl         String?
+  engagementType    EngagementType?
+  details           String
+  status            LeadStatus      @default(NEW)
+  preReworkStatus   LeadStatus?
+  registered        Boolean         @default(false)
+  registeredAt      DateTime?
+  transactionLive   Boolean         @default(false)
+  transactionLiveAt DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
   freelancer   User   @relation("FreelancerLeads", fields: [freelancerId], references: [id])
   freelancerId String

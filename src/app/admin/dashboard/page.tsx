@@ -11,6 +11,8 @@ export default async function AdminDashboardPage() {
   const leads = await prisma.lead.findMany({
     select: {
       status: true,
+      registered: true,
+      transactionLive: true,
       freelancer: { select: { id: true, name: true } },
       qualifier: { select: { id: true, name: true } },
       salesManager: { select: { id: true, name: true } },

@@ -7,8 +7,10 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { CompetitorBadge } from "@/components/CompetitorBadge";
 import { RequirementBadge } from "@/components/RequirementBadge";
 import { CommentThread } from "@/components/CommentThread";
+import { MilestoneBadges } from "@/components/MilestoneBadges";
 import { URGENCY_LABEL, URGENCY_COLOR } from "@/lib/lead-urgency";
 import { COMPETITOR_LABEL, ENGAGEMENT_LABEL } from "@/lib/lead-competitor";
+import { canSetDealMilestones } from "@/lib/lead-status-rules";
 import { useLocationFilter } from "@/hooks/useLocationFilter";
 import { LocationFilterBar } from "@/components/LocationFilterBar";
 
@@ -51,6 +53,7 @@ export function SalesLeadList({ leads }: { leads: LeadWithRelations[] }) {
             </div>
             <div className="flex shrink-0 flex-col items-end gap-1">
               <StatusBadge status={lead.status} />
+              <MilestoneBadges registered={lead.registered} transactionLive={lead.transactionLive} />
               <div className="flex flex-wrap justify-end gap-1">
                 <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${URGENCY_COLOR[lead.urgency]}`}>
                   {URGENCY_LABEL[lead.urgency]}
@@ -68,6 +71,7 @@ export function SalesLeadList({ leads }: { leads: LeadWithRelations[] }) {
               {(lead.status === "ASSIGNED_TO_SALES" || lead.status === "IN_PROGRESS") && (
                 <UpdateForm lead={lead} />
               )}
+              {canSetDealMilestones(lead) && <MilestoneForm lead={lead} />}
 
               <div className="mt-4">
                 <h4 className="mb-2 text-sm font-medium text-slate-700">Comments</h4>
@@ -102,6 +106,22 @@ function LeadDetails({ lead }: { lead: LeadWithRelations }) {
       <Detail label="Requirement tag" value={lead.requirementProfile?.title} />
       <Detail label="Freelancer" value={lead.freelancer.name} />
       <Detail label="Qualified by" value={lead.qualifier?.name} />
+      {lead.status === "CONVERTED" && (
+        <>
+          <Detail
+            label="Registered"
+            value={lead.registered ? `Yes${lead.registeredAt ? ` — ${new Date(lead.registeredAt).toLocaleDateString()}` : ""}` : "Not yet"}
+          />
+          <Detail
+            label="1st transaction live"
+            value={
+              lead.transactionLive
+                ? `Yes${lead.transactionLiveAt ? ` — ${new Date(lead.transactionLiveAt).toLocaleDateString()}` : ""}`
+                : "Not yet"
+            }
+          />
+        </>
+      )}
       <div className="col-span-full">
         <dt className="text-slate-400">Details</dt>
         <dd className="whitespace-pre-wrap break-words text-slate-700">{lead.details}</dd>
@@ -209,6 +229,61 @@ function UpdateForm({ lead }: { lead: LeadWithRelations }) {
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+function MilestoneForm({ lead }: { lead: LeadWithRelations }) {
+  const router = useRouter();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function toggle(field: "registered" | "transactionLive") {
+    setSubmitting(true);
+    setError(null);
+    const nextRegistered = field === "registered" ? !lead.registered : lead.registered;
+    const nextTransactionLive = field === "transactionLive" ? !lead.transactionLive : lead.transactionLive;
+    const res = await fetch(`/api/leads/${lead.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "update_milestones", registered: nextRegistered, transactionLive: nextTransactionLive }),
+    });
+    setSubmitting(false);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error ?? "Failed to update");
+      return;
+    }
+    router.refresh();
+  }
+
+  return (
+    <div className="mb-4 rounded-lg border border-sky-200 bg-sky-50 p-4">
+      <p className="mb-2 text-sm font-medium text-slate-700">Deal reporting status</p>
+      <div className="flex flex-wrap gap-4">
+        <label className="flex items-center gap-2 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={lead.registered}
+            disabled={submitting}
+            onChange={() => toggle("registered")}
+            className="h-4 w-4 rounded border-slate-300"
+          />
+          Registered
+        </label>
+        <label className={`flex items-center gap-2 text-sm ${lead.registered ? "text-slate-700" : "text-slate-400"}`}>
+          <input
+            type="checkbox"
+            checked={lead.transactionLive}
+            disabled={submitting || !lead.registered}
+            onChange={() => toggle("transactionLive")}
+            className="h-4 w-4 rounded border-slate-300"
+          />
+          1st transaction live
+        </label>
+      </div>
+      {!lead.registered && <p className="mt-1 text-xs text-slate-400">Mark Registered first.</p>}
+      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
     </div>
   );
 }

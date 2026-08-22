@@ -21,6 +21,8 @@ export function PipelineDashboard({ stats }: { stats: PipelineStats }) {
         <StatCard label="Open pipeline" value={stats.openPipeline} />
         <StatCard label="Deal agreed" value={stats.convertedCount} accent="text-emerald-700" />
         <StatCard label="Conversion rate" value={pct(stats.conversionRate)} accent="text-emerald-700" />
+        <StatCard label="Registered" value={stats.registeredCount} accent="text-sky-700" />
+        <StatCard label="1st transaction live" value={stats.transactionLiveCount} accent="text-purple-700" />
       </section>
 
       <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -44,11 +46,13 @@ export function PipelineDashboard({ stats }: { stats: PipelineStats }) {
           <EmptyRow text="No leads assigned to sales yet." />
         ) : (
           <Table
-            columns={["Sales manager", "Active", "Deal agreed", "Closed", "Conversion"]}
+            columns={["Sales manager", "Active", "Deal agreed", "Registered", "1st transaction live", "Closed", "Conversion"]}
             rows={stats.salesManagers.map((s) => [
               s.name,
               <BarCell key="active" value={s.active} max={maxOf(stats.salesManagers, "active")} />,
               s.converted,
+              s.registered,
+              s.transactionLive,
               s.closed,
               pct(s.conversionRate),
             ])}

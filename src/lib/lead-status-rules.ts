@@ -19,3 +19,7 @@ export function canAssignSales(lead: LeadForRules): boolean {
       (lead.preReworkStatus === "ASSIGNED_TO_SALES" || lead.preReworkStatus === "IN_PROGRESS"))
   );
 }
+
+export function canSetDealMilestones(lead: { status: LeadStatus }): boolean {
+  return lead.status === "CONVERTED";
+}

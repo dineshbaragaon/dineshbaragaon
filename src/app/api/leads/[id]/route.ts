@@ -4,7 +4,7 @@ import { getSession } from "@/lib/session";
 import { leadIncludeFor } from "@/lib/lead-query";
 import { ROLE_HOME } from "@/lib/roles";
 import { assignQualifierCore, assignSalesCore } from "@/lib/lead-assignment";
-import { canAssignQualifier, canAssignSales } from "@/lib/lead-status-rules";
+import { canAssignQualifier, canAssignSales, canSetDealMilestones } from "@/lib/lead-status-rules";
 import {
   sendLeadAssignedEmail,
   sendLeadStatusUpdateEmail,
@@ -210,6 +210,46 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
           message: `your lead "${updated.title}" was closed${comment?.trim() ? `: "${comment.trim()}"` : "."}`,
         });
       }
+      return NextResponse.json({ lead: updated });
+    }
+
+    case "update_milestones": {
+      if (user.role !== "SALES_MANAGER" || lead.salesManagerId !== user.id) {
+        return NextResponse.json({ error: "Not authorized for this lead" }, { status: 403 });
+      }
+      if (!canSetDealMilestones(lead)) {
+        return NextResponse.json({ error: "Milestones can only be set once the deal is agreed" }, { status: 400 });
+      }
+      const transactionLive = Boolean(body.transactionLive);
+      const registered = Boolean(body.registered) || transactionLive;
+      const now = new Date();
+
+      const updated = await prisma.$transaction(async (tx) => {
+        const updatedLead = await tx.lead.update({
+          where: { id },
+          data: {
+            registered,
+            registeredAt: registered ? (lead.registered ? lead.registeredAt : now) : null,
+            transactionLive,
+            transactionLiveAt: transactionLive ? (lead.transactionLive ? lead.transactionLiveAt : now) : null,
+          },
+          include: leadIncludeFor(user.role),
+        });
+
+        const changes: string[] = [];
+        if (registered !== lead.registered) changes.push(registered ? "marked Registered" : "unmarked Registered");
+        if (transactionLive !== lead.transactionLive) {
+          changes.push(transactionLive ? "marked 1st transaction live" : "unmarked 1st transaction live");
+        }
+        if (changes.length > 0) {
+          await tx.comment.create({
+            data: { leadId: id, authorId: user.id, body: `Deal status: ${changes.join(" and ")}.` },
+          });
+        }
+
+        return updatedLead;
+      });
+
       return NextResponse.json({ lead: updated });
     }
 

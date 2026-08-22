@@ -25,6 +25,8 @@ export default async function AdminPage() {
 
   const newCount = leads.filter((l) => l.status === "NEW").length;
   const qualifiedCount = leads.filter((l) => l.status === "QUALIFIED").length;
+  const registeredCount = leads.filter((l) => l.registered).length;
+  const transactionLiveCount = leads.filter((l) => l.transactionLive).length;
 
   const qualifiersWithLoad = qualifiers.map((q) => ({
     ...q,
@@ -50,6 +52,10 @@ export default async function AdminPage() {
           {newCount > 0 && <span className="font-medium text-slate-700">{newCount} unassigned</span>}
           {qualifiedCount > 0 && (
             <span className="font-medium text-emerald-700">{qualifiedCount} awaiting sales assignment</span>
+          )}
+          {registeredCount > 0 && <span className="font-medium text-sky-700">{registeredCount} registered</span>}
+          {transactionLiveCount > 0 && (
+            <span className="font-medium text-purple-700">{transactionLiveCount} transaction live</span>
           )}
         </div>
         <div className="flex gap-2">
